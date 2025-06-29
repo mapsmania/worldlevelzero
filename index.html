@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <base target="_top" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>World Level Zero</title>
+
+    <link
+      rel="shortcut icon"
+      type="image/x-icon"
+      href="docs/images/favicon.ico"
+    />
+
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+      crossorigin=""
+    />
+    <script
+      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+      crossorigin=""
+    ></script>
+    <link rel="stylesheet" href="https://world-level-zero.glitch.me/style.css" />
+  </head>
+  <body>
+    <div id="map"></div>
+    <div id="reset-container">
+  <div class="tooltip">
+    <button id="reset-button">
+      <img
+        src="https://cdn.glitch.global/aaa8d752-f7c2-4f64-ad60-441cea87d57c/Reset_button.svg.png?v=1726673366151"
+        alt="Reset Button"
+        style="height: 18px; vertical-align: middle; cursor: pointer"
+      />
+    </button>
+    <div class="tooltiptext">Clear Map</div>
+  </div>
+</div>
+
+    <div id="score-container">
+      <span id="score-text">World Level: 0 </span>
+    </div>
+    <div id="options-container">
+      <div
+        class="color-option"
+        data-color="#ff0000"
+        style="background-color: #ff0000"
+      >
+        Lived Here: 4 pts
+      </div>
+      <div
+        class="color-option"
+        data-color="#ff4c4c"
+        style="background-color: #ff4c4c"
+      >
+        Stayed Here: 3 pts
+      </div>
+      <div
+        class="color-option"
+        data-color="#ff8c1a"
+        style="background-color: #ff8c1a"
+      >
+        Visited Here: 2 pts
+      </div>
+      <div
+        class="color-option"
+        data-color="#a6e62c"
+        style="background-color: #a6e62c"
+      >
+        Passed Through: 1 pt
+      </div>
+      <div
+        class="color-option"
+        data-color="#ffffff"
+        style="background-color: #ffffff; color: black"
+      >
+        Never Been Here: 0 pt
+      </div>
+      <div class="tooltip">
+
+        <button>
+
+          <div onclick="loadHomePage()">
+
+            <img
+
+              src="https://cdn.glitch.global/5c79659d-2de3-48c0-b764-8b0e57d2e123/Home-icon.svg.png?v=1726504440875"
+
+              id="home-button"
+
+              alt="Logo"
+
+              style="height: 18px; vertical-align: middle; cursor: pointer"
+
+            />
+
+          </div>
+
+        </button>
+
+        <div class="tooltiptext">Back to TripGeo</div>
+
+      </div>
+
+       <div class="tooltip">
+        <button onclick="postScoreToBluesky(score)">
+          <img
+            src="https://cdn.glitch.global/5c79659d-2de3-48c0-b764-8b0e57d2e123/Bluesky_Logo.svg.png?v=1726579976732"
+            id="bluesky-button"
+            alt="Logo"
+            style="height: 18px; vertical-align: middle; cursor: pointer"
+          />
+        </button>
+        <div class="tooltiptext">Share on Bluesky</div>
+      </div>
+      <div class="tooltip">
+        <button onclick="postScoreToTwitter(score)">
+          <img
+            src="https://cdn.glitch.global/5c79659d-2de3-48c0-b764-8b0e57d2e123/logo-black.png?v=1726492469512"
+            id="twitter-button"
+            alt="Logo"
+            style="height: 18px; vertical-align: middle; cursor: pointer"
+          />
+        </button>
+        <div class="tooltiptext">Share on X</div>
+      </div>
+
+      <div class="tooltip">
+        <button onclick="postScoreToFacebook(score)">
+          <img
+            src="https://cdn.glitch.global/5c79659d-2de3-48c0-b764-8b0e57d2e123/thumbnails%2F2023_Facebook_icon.svg.png?1726580256981"
+            id="facebook-button"
+            alt="Logo"
+            style="height: 18px; vertical-align: middle; cursor: pointer"
+          />
+        </button>
+        <div class="tooltiptext">Share on Facebook</div>
+      </div>
+    </div>
+
+    <script src="https://world-level-zero.glitch.me/boroughs.js" type="text/javascript"></script>
+    <script src="https://world-level-zero.glitch.me/script.js" type="text/javascript"></script>
+  </body>
+</html>
