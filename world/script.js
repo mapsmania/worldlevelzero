@@ -164,4 +164,5 @@ function updateContinentChart(continent) {
   // Optional: update label if you have one
   const labelEl = document.getElementById(`${continent.replace(" ", "")}ChartLabel`);
   if (labelEl) labelEl.innerText = `${percent}%`;
+
 }
