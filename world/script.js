@@ -77,36 +77,57 @@ map.on("load", async () => {
 
   // On map click
   map.on("click", (e) => {
-    if (!worldData) return;
-    const clickedCountry = findCountryAtPoint(worldData, e.lngLat);
-    if (!clickedCountry) return;
+  if (!worldData) return;
+  const clickedCountry = findCountryAtPoint(worldData, e.lngLat);
+  if (!clickedCountry) return;
 
-    const props = clickedCountry.properties;
-    const name = props.name || props.admin || "Unknown";
-    const continent = props.continent;
+  const props = clickedCountry.properties;
+  const name = props.name || props.admin || "Unknown";
+  const continent = props.continent;
 
-    // Only add the country if not already clicked
-    const alreadyClicked = clickedCountries.some(f => f.properties.name === name);
+  // Check if the country is already selected
+  const existingIndex = clickedCountries.findIndex(
+    (f) => f.properties.name === name
+  );
 
-    if (!alreadyClicked) {
-      clickedCountries.push(clickedCountry);
+  if (existingIndex >= 0) {
+    // ✅ Country already selected → remove it
+    clickedCountries.splice(existingIndex, 1);
 
-      // Update GeoJSON source with all clicked countries
-      map.getSource("selected-countries").setData({
-        type: "FeatureCollection",
-        features: clickedCountries,
-      });
-
-      // Update continent chart if applicable
-      if (continent && clickedCountriesByContinent[continent]) {
-        clickedCountriesByContinent[continent].add(name);
-        updateContinentChart(continent);
-      }
-
-      // ✅ Update total clicked count
-      updateTotalClickedCount();
+    // Remove from continent set
+    if (continent && clickedCountriesByContinent[continent]) {
+      clickedCountriesByContinent[continent].delete(name);
+      updateContinentChart(continent);
     }
-  });
+
+    // Update map source
+    map.getSource("selected-countries").setData({
+      type: "FeatureCollection",
+      features: clickedCountries,
+    });
+
+    // Update totals
+    updateTotalClickedCount();
+
+  } else {
+    // ✅ Country not yet selected → add it
+    clickedCountries.push(clickedCountry);
+
+    // Add to continent set
+    if (continent && clickedCountriesByContinent[continent]) {
+      clickedCountriesByContinent[continent].add(name);
+      updateContinentChart(continent);
+    }
+
+    // Update map source
+    map.getSource("selected-countries").setData({
+      type: "FeatureCollection",
+      features: clickedCountries,
+    });
+
+    // Update totals
+    updateTotalClickedCount();
+  }
 });
 
 // Cursor pointer on hover
