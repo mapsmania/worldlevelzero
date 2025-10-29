@@ -259,43 +259,33 @@ function updateTotalClickedCount() {
 
 async function generateShareableImage() {
   try {
-    // Show loading state
     const mapContainer = document.getElementById('map');
     const button = document.getElementById('shareMapBtn');
     const originalText = button.innerHTML;
-    
+
+    // Show loading state
     mapContainer.style.opacity = '0.7';
     button.innerHTML = '⏳ Generating...';
     button.disabled = true;
-    
-    // Capture the map container
-    const canvas = await html2canvas(mapContainer, {
-      useCORS: true,
-      scale: 2,
-      backgroundColor: '#ffffff',
-      logging: false,
-      allowTaint: true,
-      foreignObjectRendering: true
-    });
-    
-    // Reset opacity and button
-    mapContainer.style.opacity = '1';
-    button.innerHTML = originalText;
-    button.disabled = false;
-    
-    // Convert to blob
-    const blob = await new Promise(resolve => {
-      canvas.toBlob(resolve, 'image/png', 1.0);
-    });
-    
-    // Create download link and preview
-    const url = URL.createObjectURL(blob);
-    showShareDialog(url, blob);
-    
+
+    // Use MapLibre's canvas directly
+    const canvas = map.getCanvas();
+    canvas.toBlob((blob) => {
+      if (!blob) throw new Error("Failed to create image blob");
+      const url = URL.createObjectURL(blob);
+
+      // Reset UI
+      mapContainer.style.opacity = '1';
+      button.innerHTML = originalText;
+      button.disabled = false;
+
+      // Show preview / download dialog
+      showShareDialog(url, blob);
+    }, 'image/png', 1.0);
+
   } catch (error) {
     console.error('Failed to generate image:', error);
-    
-    // Reset on error
+
     const mapContainer = document.getElementById('map');
     const button = document.getElementById('shareMapBtn');
     mapContainer.style.opacity = '1';
@@ -303,10 +293,10 @@ async function generateShareableImage() {
       button.innerHTML = '📸 Share My Map';
       button.disabled = false;
     }
-    
     alert('Sorry, could not generate the image. Please try again.');
   }
 }
+
 
 function showShareDialog(imageUrl, blob) {
   // Remove existing dialog if any
