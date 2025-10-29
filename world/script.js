@@ -97,12 +97,6 @@ map.on("load", async () => {
         features: clickedCountries,
       });
 
-      // Popup
-      new maplibregl.Popup()
-        .setLngLat(e.lngLat)
-        .setHTML(`<strong>${name}</strong>`)
-        .addTo(map);
-
       // Update continent chart if applicable
       if (continent && clickedCountriesByContinent[continent]) {
         clickedCountriesByContinent[continent].add(name);
