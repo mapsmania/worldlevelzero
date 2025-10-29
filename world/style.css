@@ -12,21 +12,25 @@ html, body {
   left: 0;
   width: 100%;
   height: 100%;
-  z-index: 1; /* ensures map is below the charts but visible */
+  z-index: 1; 
 }
 
 #charts-wrapper {
-  @apply flex flex-wrap justify-center gap-6 p-5 border-t border-slate-200 bg-white shadow-[0_-2px_8px_rgba(0,0,0,0.25)];
-  
   position: absolute;
   bottom: 0;
   left: 0;
   width: 100%;
-  z-index: 10;
-
-  /* remove transparency to ensure solid white background */
-  background: white !important;
-  backdrop-filter: none;
+  z-index: 10; /* sits on top of the map but only covers bottom area */
+  display: flex;
+  flex-direction: row; /* ensure horizontal alignment */
+  flex-wrap: nowrap;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 24px;
+  padding: 16px 20px;
+  background: white;
+  border-top: 1px solid #e2e8f0;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.25);
 }
 
 .chart-box {
