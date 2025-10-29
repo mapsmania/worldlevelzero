@@ -246,3 +246,36 @@ function updateTotalClickedCount() {
     percentEl.textContent = `${percent}%`;
   }
 }
+async function generateShareableImage() {
+  try {
+    // Show loading state
+    const mapContainer = document.getElementById('map');
+    mapContainer.style.opacity = '0.7';
+    
+    // Capture the map container
+    const canvas = await html2canvas(mapContainer, {
+      useCORS: true, // Allow cross-origin images (map tiles)
+      scale: 2, // Higher resolution
+      backgroundColor: '#ffffff',
+      logging: false, // Disable console logging
+      allowTaint: true,
+      foreignObjectRendering: true
+    });
+    
+    // Reset opacity
+    mapContainer.style.opacity = '1';
+    
+    // Convert to blob
+    const blob = await new Promise(resolve => {
+      canvas.toBlob(resolve, 'image/png', 1.0);
+    });
+    
+    // Create download link and preview
+    const url = URL.createObjectURL(blob);
+    showShareDialog(url, blob);
+    
+  } catch (error) {
+    console.error('Failed to generate image:', error);
+    alert('Sorry, could not generate the image. Please try again.');
+  }
+}
