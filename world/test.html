@@ -30,25 +30,18 @@
     };
   </script>
 </head>
-<body class="bg-gray-100">
-  <!-- Placeholder Map -->
-  <div id="map" class="shadow-lg">
-    <div class="flex items-center justify-center h-full text-gray-500 font-semibold">
-      [Placeholder for MapLibre Map]
-    </div>
-  </div>
+<body>
+  <div id="map"></div>
 
-  <!-- Charts panel -->
   <div id="charts-wrapper">
-    <!-- Chart structure remains the same -->
     <div class="chart-box">
       <div class="chart-inner">
-        <canvas id="EuropeChart" width="120" height="120"></canvas>
-        <div class="chart-label" id="EuropeChartLabel">0%</div>
+        <canvas id="EuropeChart"></canvas>
+        <div class="chart-label">0%</div>
       </div>
       <div class="continent-name">Europe</div>
     </div>
-
+   
     <div class="chart-box">
       <div class="chart-inner">
         <canvas id="AsiaChart" width="120" height="120"></canvas>
@@ -88,9 +81,7 @@
       </div>
       <div class="continent-name">Oceania</div>
     </div>
-  </div>
 
-  <!-- Your external script is referenced here -->
-  <script src="script.js"></script>
+  </div>
 </body>
 </html>
