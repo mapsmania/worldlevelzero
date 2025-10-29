@@ -3,17 +3,14 @@ html, body {
   width: 100%;
   margin: 0;
   padding: 0;
+  position: relative;
   font-family: 'Inter', sans-serif;
-  position: relative;   /* ensure absolute children are relative to the page */
-  overflow: hidden;     /* keeps map from scrolling */
+  overflow: hidden;
 }
 
 #map {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  inset: 0;
   z-index: 1;
 }
 
@@ -22,29 +19,26 @@ html, body {
   bottom: 0;
   left: 0;
   width: 100%;
+  min-height: 160px;
   z-index: 10;
-
   display: flex;
   flex-direction: row;
-  flex-wrap: nowrap;
   justify-content: center;
   align-items: flex-start;
   gap: 24px;
-
   padding: 16px 20px;
-  background: white;
+  background: rgba(255,255,255,0.9);
   border-top: 1px solid #e2e8f0;
-  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.25);
-
+  box-shadow: 0 -2px 8px rgba(0,0,0,0.25);
   overflow-x: auto;
-  white-space: nowrap;
+  overflow-y: hidden;
 }
 
 .chart-box {
+  background: white;
+  border-radius: 0.75rem;
+  padding: 12px;
   text-align: center;
-  padding: 10px;
-  border-radius: 0.5rem;
-  background-color: white;
   box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1),
               0 2px 4px -2px rgb(0 0 0 / 0.1);
   flex-shrink: 0;
@@ -55,15 +49,12 @@ html, body {
   width: 120px;
   height: 120px;
   margin: 0 auto;
-  background: white;
-  border-radius: 50%;
-  z-index: 1;
 }
 
 .chart-inner canvas {
   width: 120px;
   height: 120px;
-  background-color: white;
+  background-color: white !important;
   border-radius: 50%;
 }
 
@@ -75,16 +66,12 @@ html, body {
   font-size: 16px;
   font-weight: bold;
   color: #333;
-  pointer-events: none;
   z-index: 3;
 }
 
 .continent-name {
-  margin-top: 10px;
+  margin-top: 8px;
   font-size: 15px;
   font-weight: 600;
   color: #222;
-  position: relative;
-  z-index: 3;
-  text-align: center;
 }
