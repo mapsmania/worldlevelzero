@@ -22,6 +22,7 @@ const map = new maplibregl.Map({
   style: "https://tiles.openfreemap.org/styles/positron",
   center: [0, 20],
   zoom: 2,
+  preserveDrawingBuffer: true  // important!
 });
 
 // ===============================
