@@ -246,24 +246,36 @@ function updateTotalClickedCount() {
     percentEl.textContent = `${percent}%`;
   }
 }
+
+// ===============================
+// Share Image Functionality
+// ===============================
+
 async function generateShareableImage() {
   try {
     // Show loading state
     const mapContainer = document.getElementById('map');
+    const button = document.getElementById('shareMapBtn');
+    const originalText = button.innerHTML;
+    
     mapContainer.style.opacity = '0.7';
+    button.innerHTML = '⏳ Generating...';
+    button.disabled = true;
     
     // Capture the map container
     const canvas = await html2canvas(mapContainer, {
-      useCORS: true, // Allow cross-origin images (map tiles)
-      scale: 2, // Higher resolution
+      useCORS: true,
+      scale: 2,
       backgroundColor: '#ffffff',
-      logging: false, // Disable console logging
+      logging: false,
       allowTaint: true,
       foreignObjectRendering: true
     });
     
-    // Reset opacity
+    // Reset opacity and button
     mapContainer.style.opacity = '1';
+    button.innerHTML = originalText;
+    button.disabled = false;
     
     // Convert to blob
     const blob = await new Promise(resolve => {
@@ -276,8 +288,88 @@ async function generateShareableImage() {
     
   } catch (error) {
     console.error('Failed to generate image:', error);
+    
+    // Reset on error
+    const mapContainer = document.getElementById('map');
+    const button = document.getElementById('shareMapBtn');
+    mapContainer.style.opacity = '1';
+    if (button) {
+      button.innerHTML = '📸 Share My Map';
+      button.disabled = false;
+    }
+    
     alert('Sorry, could not generate the image. Please try again.');
   }
 }
 
-document.getElementById('shareMapBtn').addEventListener('click', generateShareableImage);
+function showShareDialog(imageUrl, blob) {
+  // Remove existing dialog if any
+  const existingDialog = document.getElementById('shareDialog');
+  if (existingDialog) existingDialog.remove();
+  
+  // Create dialog
+  const dialog = document.createElement('div');
+  dialog.id = 'shareDialog';
+  dialog.innerHTML = `
+    <div class="share-dialog-overlay">
+      <div class="share-dialog-content">
+        <h3>Share Your Travel Map</h3>
+        <div class="image-preview">
+          <img src="${imageUrl}" alt="Your travel map" />
+        </div>
+        <div class="share-actions">
+          <button id="downloadBtn" class="btn btn-primary">📥 Download Image</button>
+          <button id="closeBtn" class="btn btn-outline">Close</button>
+        </div>
+        <p class="share-hint">Share your travel progress with friends! 🌍</p>
+      </div>
+    </div>
+  `;
+  
+  // Add to page
+  document.body.appendChild(dialog);
+  
+  // Event handlers
+  document.getElementById('downloadBtn').addEventListener('click', () => {
+    downloadImage(imageUrl);
+  });
+  
+  document.getElementById('closeBtn').addEventListener('click', () => {
+    closeShareDialog(dialog, imageUrl);
+  });
+  
+  // Close on overlay click
+  dialog.querySelector('.share-dialog-overlay').addEventListener('click', (e) => {
+    if (e.target === dialog.querySelector('.share-dialog-overlay')) {
+      closeShareDialog(dialog, imageUrl);
+    }
+  });
+  
+  // Close on Escape key
+  const handleEscape = (e) => {
+    if (e.key === 'Escape') {
+      closeShareDialog(dialog, imageUrl);
+      document.removeEventListener('keydown', handleEscape);
+    }
+  };
+  document.addEventListener('keydown', handleEscape);
+}
+
+function downloadImage(imageUrl) {
+  const a = document.createElement('a');
+  a.href = imageUrl;
+  a.download = `my-travel-map-${new Date().toISOString().split('T')[0]}.png`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
+function closeShareDialog(dialog, imageUrl) {
+  if (dialog && dialog.parentNode) {
+    dialog.parentNode.removeChild(dialog);
+  }
+  // Clean up the object URL to prevent memory leaks
+  if (imageUrl) {
+    URL.revokeObjectURL(imageUrl);
+  }
+}
