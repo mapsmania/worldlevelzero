@@ -1,3 +1,4 @@
+
 // ===============================
 // Global variables
 // ===============================
@@ -37,24 +38,22 @@ continents.forEach(cont => {
 
   const ctx = canvas.getContext("2d");
   continentCharts[cont] = new Chart(ctx, {
-  type: "doughnut",
-  data: {
-    datasets: [{
-      data: [0, 100],
-      backgroundColor: ["#0077ff", "#e0e0e0"],
-      borderWidth: 0,
-      cutout: "75%",
-    }],
-  },
-  options: {
-    responsive: false,
-    rotation: -90,
-    circumference: 360,
-    animation: false, // 🚀 disable animations completely
-    plugins: { legend: { display: false }, tooltip: { enabled: false } },
-  },
-});
-
+    type: "doughnut",
+    data: {
+      datasets: [{
+        data: [0, 100],
+        backgroundColor: ["#0077ff", "#e0e0e0"],
+        borderWidth: 0,
+        cutout: "75%",
+      }],
+    },
+    options: {
+      responsive: false,
+      rotation: -90,
+      circumference: 360,
+      plugins: { legend: { display: false }, tooltip: { enabled: false } },
+    },
+  });
 });
 
 // ===============================
@@ -260,85 +259,44 @@ function updateTotalClickedCount() {
 // Share Image Functionality
 // ===============================
 
-// New function: Prepare the UI for a clean screenshot
-function prepareUIForCapture() {
-    // Hide temporary/interactive elements before capture
-    const dialog = document.getElementById('shareDialog');
-    if (dialog) dialog.style.display = 'none';
-
-    const shareButton = document.getElementById('shareMapBtn');
-    if (shareButton) shareButton.style.display = 'none'; // Hide the button itself
-
-    // Note: If you have any other elements you want hidden from the screenshot,
-    // like popups or tooltips, hide them here.
-}
-
-// New function: Restore the UI after screenshot
-function restoreUI() {
-    // Restore display of hidden elements
-    const dialog = document.getElementById('shareDialog');
-    if (dialog) dialog.style.display = 'block';
-
-    const shareButton = document.getElementById('shareMapBtn');
-    if (shareButton) shareButton.style.display = 'block'; // Show the button again
-}
-
-
 async function generateShareableImage() {
+  try {
+    const mapContainer = document.getElementById('map');
     const button = document.getElementById('shareMapBtn');
     const originalText = button.innerHTML;
 
-    try {
-        // Show loading state
-        button.innerHTML = '⏳ Generating...';
-        button.disabled = true;
+    // Show loading state
+    mapContainer.style.opacity = '0.7';
+    button.innerHTML = '⏳ Generating...';
+    button.disabled = true;
 
-        // 💡 NEW STEP: Force an update on all Chart.js instances.
-        // This ensures the canvases are fully rendered and settled before html2canvas starts.
-        Object.values(continentCharts).forEach(chart => {
-             chart.update(); 
-        });
+    // Use MapLibre's canvas directly
+    const canvas = map.getCanvas();
+    canvas.toBlob((blob) => {
+      if (!blob) throw new Error("Failed to create image blob");
+      const url = URL.createObjectURL(blob);
 
-        // 1. Prepare UI for clean capture (e.g., hide the share button itself)
-        prepareUIForCapture();
-        
-        // 2. Use html2canvas to capture the entire body element
-        const canvas = await html2canvas(document.body, {
-            useCORS: true, 
-            allowTaint: true, 
-            backgroundColor: null, 
-            scale: 2, 
-            scrollX: 0, 
-            scrollY: 0, 
-            windowWidth: document.documentElement.offsetWidth,
-            windowHeight: document.documentElement.offsetHeight,
-        });
+      // Reset UI
+      mapContainer.style.opacity = '1';
+      button.innerHTML = originalText;
+      button.disabled = false;
 
-        // 3. Convert the canvas to a blob
-        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png', 1.0));
-        if (!blob) throw new Error("Failed to create image blob from canvas.");
-        
-        const url = URL.createObjectURL(blob);
+      // Show preview / download dialog
+      showShareDialog(url, blob);
+    }, 'image/png', 1.0);
 
-        // 4. Restore UI
-        restoreUI();
-        button.innerHTML = originalText;
-        button.disabled = false;
+  } catch (error) {
+    console.error('Failed to generate image:', error);
 
-        // 5. Show preview / download dialog
-        showShareDialog(url, blob);
-
-    } catch (error) {
-        console.error('Failed to generate image:', error);
-
-        // Ensure UI is restored on error
-        restoreUI(); 
-        if (button) {
-            button.innerHTML = originalText;
-            button.disabled = false;
-        }
-        alert('Sorry, could not generate the image. Please try again.');
+    const mapContainer = document.getElementById('map');
+    const button = document.getElementById('shareMapBtn');
+    mapContainer.style.opacity = '1';
+    if (button) {
+      button.innerHTML = '📸 Share My Map';
+      button.disabled = false;
     }
+    alert('Sorry, could not generate the image. Please try again.');
+  }
 }
 
 function showShareDialog(imageUrl, blob) {
