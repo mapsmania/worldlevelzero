@@ -3,6 +3,7 @@ html, body {
   padding: 0;
   height: 100%;
   width: 100%;
+  font-family: 'Inter', sans-serif;
 }
 
 #map {
@@ -14,38 +15,31 @@ html, body {
 }
 
 #charts-wrapper {
-  position: absolute;
-  left: 0;
-  bottom: 10px;
-  border-radius: 12px;
-  width: calc(100% - 20px);
-  margin: 0 10px;
-  min-height: 160px; /* ⬅️ Increased height for chart + label */
   display: flex;
+  flex-wrap: wrap;
   justify-content: center;
-  align-items: flex-start; /* keep charts visible at top of the bar */
-  gap: 24px;
-  padding: 16px 20px;
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(8px);
-  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.25);
-  z-index: 2;
-  overflow-x: auto;
+  gap: 24px; /* Tailwind gap-6 */
+  padding: 20px;
+  background-color: #f8fafc; /* Tailwind bg-slate-50 */
+  border-top: 1px solid #e2e8f0; /* Tailwind border-slate-200 */
 }
 
 .chart-box {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  flex-shrink: 0;
+  /* Centering the chart and text inside this container */
+  text-align: center; 
+  padding: 10px;
+  border-radius: 0.5rem; /* Tailwind rounded-lg */
+  background-color: white;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
 }
 
 .chart-inner {
   position: relative;
-  width: 100px;
-  height: 100px;
-  z-index: 1; /* ensure chart layer stays above background */
+  /* Match canvas size (120x120) for perfect label centering */
+  width: 120px; 
+  height: 120px;
+  z-index: 1; 
+  margin: 0 auto; /* Ensure the inner chart is centered within its box */
 }
 
 .chart-label {
@@ -57,14 +51,19 @@ html, body {
   font-weight: bold;
   color: #333;
   pointer-events: none;
-  z-index: 2; /* keep percentage above the canvas */
+  z-index: 2; 
+  text-align: center; 
 }
 
 .continent-name {
-  margin-top: 10px;
+  /* This is the gap/margin under the radial chart (10px) */
+  margin-top: 10px; 
   font-size: 15px;
   font-weight: 600;
   color: #222;
   position: relative;
-  z-index: 3; /* ensure labels always render above chart */
+  z-index: 3; 
+  /* Ensures continent name text is perfectly centered */
+  text-align: center;
 }
+
