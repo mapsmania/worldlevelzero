@@ -260,43 +260,46 @@ function updateTotalClickedCount() {
 
 async function generateShareableImage() {
   try {
-    const mapContainer = document.getElementById('map');
+    const container = document.getElementById('captureContainer');
     const button = document.getElementById('shareMapBtn');
     const originalText = button.innerHTML;
 
     // Show loading state
-    mapContainer.style.opacity = '0.7';
+    container.style.opacity = '0.7';
     button.innerHTML = '⏳ Generating...';
     button.disabled = true;
 
-    // Use MapLibre's canvas directly
-    const canvas = map.getCanvas();
-    canvas.toBlob((blob) => {
-      if (!blob) throw new Error("Failed to create image blob");
-      const url = URL.createObjectURL(blob);
+    // Capture container
+    const canvas = await html2canvas(container, {
+      useCORS: true,
+      scale: 2,
+      backgroundColor: '#ffffff',
+      logging: false,
+      allowTaint: true,
+      foreignObjectRendering: true
+    });
 
-      // Reset UI
-      mapContainer.style.opacity = '1';
-      button.innerHTML = originalText;
-      button.disabled = false;
+    // Convert to blob
+    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png', 1.0));
+    const url = URL.createObjectURL(blob);
 
-      // Show preview / download dialog
-      showShareDialog(url, blob);
-    }, 'image/png', 1.0);
+    // Reset UI
+    container.style.opacity = '1';
+    button.innerHTML = originalText;
+    button.disabled = false;
+
+    // Show preview / download dialog
+    showShareDialog(url, blob);
 
   } catch (error) {
     console.error('Failed to generate image:', error);
-
-    const mapContainer = document.getElementById('map');
-    const button = document.getElementById('shareMapBtn');
-    mapContainer.style.opacity = '1';
-    if (button) {
-      button.innerHTML = '📸 Share My Map';
-      button.disabled = false;
-    }
+    container.style.opacity = '1';
+    button.innerHTML = '📸 Share My Map';
+    button.disabled = false;
     alert('Sorry, could not generate the image. Please try again.');
   }
 }
+
 
 
 function showShareDialog(imageUrl, blob) {
