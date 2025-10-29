@@ -104,6 +104,24 @@ map.on("load", async () => {
       }
     }
   });
+
+  if (!alreadyClicked) {
+  clickedCountries.push(clickedCountry);
+
+  map.getSource("selected-countries").setData({
+    type: "FeatureCollection",
+    features: clickedCountries,
+  });
+
+  if (continent && clickedCountriesByContinent[continent]) {
+    clickedCountriesByContinent[continent].add(name);
+    updateContinentChart(continent);
+  }
+
+  // ✅ Update total clicked count
+  updateTotalClickedCount();
+}
+
 });
 
 map.on("mousemove", (e) => {
@@ -164,4 +182,10 @@ function updateContinentChart(continent) {
   const labelEl = document.getElementById(`${continent.replace(" ", "")}ChartLabel`);
   if (labelEl) labelEl.innerText = `${percent}%`;
 }
+
+function updateTotalClickedCount() {
+  const totalEl = document.getElementById("totalClicked");
+  if (totalEl) totalEl.textContent = clickedCountries.length;
+}
+
 
