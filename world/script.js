@@ -1,6 +1,15 @@
 let worldData = null;
-let clickedEuropeCountries = new Set();
 let clickedCountries = []; // store all clicked country features
+
+// Track clicked countries per continent
+let clickedCountriesByContinent = {
+  Europe: new Set(),
+  Asia: new Set(),
+  Africa: new Set(),
+  "North America": new Set(),
+  "South America": new Set(),
+  Oceania: new Set(),
+};
 
 // Initialize MapLibre
 const map = new maplibregl.Map({
@@ -10,27 +19,30 @@ const map = new maplibregl.Map({
   zoom: 2,
 });
 
-// Chart.js setup
-const ctx = document.getElementById("europeChart").getContext("2d");
-const chartData = {
-  datasets: [
-    {
-      data: [0, 100],
-      backgroundColor: ["#0077ff", "#e0e0e0"],
-      borderWidth: 0,
-      cutout: "75%",
+// Define continents
+const continents = ["Europe", "Asia", "Africa", "North America", "South America", "Oceania"];
+const continentCharts = {};
+
+// Initialize Chart.js charts per continent
+continents.forEach(cont => {
+  const ctx = document.getElementById(`${cont.replace(" ", "")}Chart`).getContext("2d");
+  continentCharts[cont] = new Chart(ctx, {
+    type: "doughnut",
+    data: {
+      datasets: [{
+        data: [0, 100],
+        backgroundColor: ["#0077ff", "#e0e0e0"],
+        borderWidth: 0,
+        cutout: "75%",
+      }],
     },
-  ],
-};
-const europeChart = new Chart(ctx, {
-  type: "doughnut",
-  data: chartData,
-  options: {
-    responsive: false,
-    rotation: -90,
-    circumference: 360,
-    plugins: { legend: { display: false }, tooltip: { enabled: false } },
-  },
+    options: {
+      responsive: false,
+      rotation: -90,
+      circumference: 360,
+      plugins: { legend: { display: false }, tooltip: { enabled: false } },
+    },
+  });
 });
 
 // Add empty GeoJSON source on load
@@ -71,11 +83,10 @@ map.on("load", async () => {
 
     const props = clickedCountry.properties;
     const name = props.name || props.admin || "Unknown";
+    const continent = props.continent;
 
     // Only add the country if not already clicked
-    const alreadyClicked = clickedCountries.some(
-      (f) => f.properties.name === props.name
-    );
+    const alreadyClicked = clickedCountries.some(f => f.properties.name === name);
 
     if (!alreadyClicked) {
       clickedCountries.push(clickedCountry);
@@ -92,10 +103,10 @@ map.on("load", async () => {
         .setHTML(`<strong>${name}</strong>`)
         .addTo(map);
 
-      // Update chart if it's a European country
-      if (props.continent === "Europe") {
-        clickedEuropeCountries.add(name);
-        updateEuropeChart();
+      // Update continent chart if applicable
+      if (continent && clickedCountriesByContinent[continent]) {
+        clickedCountriesByContinent[continent].add(name);
+        updateContinentChart(continent);
       }
     }
   });
@@ -113,7 +124,6 @@ function pointInPolygon(polygon, [x, y]) {
       const intersect = yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi;
       if (intersect) ringInside = !ringInside;
     }
-    // outer ring toggles inside status
     if (ringInside) inside = !inside;
   }
 
@@ -141,17 +151,17 @@ function findCountryAtPoint(geojson, point) {
   return null;
 }
 
-// Update the radial chart
-function updateEuropeChart() {
-  const totalEurope = worldData.features.filter(
-    (f) => f.properties.continent === "Europe"
-  ).length;
+// Update a continent's radial chart
+function updateContinentChart(continent) {
+  const total = worldData.features.filter(f => f.properties.continent === continent).length;
+  const clickedCount = clickedCountriesByContinent[continent].size;
+  const percent = Math.round((clickedCount / total) * 100);
 
-  const clickedCount = clickedEuropeCountries.size;
-  const percent = Math.round((clickedCount / totalEurope) * 100);
+  const chart = continentCharts[continent];
+  chart.data.datasets[0].data = [percent, 100 - percent];
+  chart.update();
 
-  chartData.datasets[0].data = [percent, 100 - percent];
-  europeChart.update();
-
-  document.getElementById("chart-label").innerText = `${percent}%`;
+  // Optional: update label if you have one
+  const labelEl = document.getElementById(`${continent.replace(" ", "")}ChartLabel`);
+  if (labelEl) labelEl.innerText = `${percent}%`;
 }
