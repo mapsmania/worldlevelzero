@@ -258,44 +258,80 @@ function updateTotalClickedCount() {
 // Share Image Functionality
 // ===============================
 
+// New function: Prepare the UI for a clean screenshot
+function prepareUIForCapture() {
+    // Hide temporary/interactive elements before capture
+    const dialog = document.getElementById('shareDialog');
+    if (dialog) dialog.style.display = 'none';
+
+    const shareButton = document.getElementById('shareMapBtn');
+    if (shareButton) shareButton.style.display = 'none'; // Hide the button itself
+
+    // Note: If you have any other elements you want hidden from the screenshot,
+    // like popups or tooltips, hide them here.
+}
+
+// New function: Restore the UI after screenshot
+function restoreUI() {
+    // Restore display of hidden elements
+    const dialog = document.getElementById('shareDialog');
+    if (dialog) dialog.style.display = 'block';
+
+    const shareButton = document.getElementById('shareMapBtn');
+    if (shareButton) shareButton.style.display = 'block'; // Show the button again
+}
+
+
 async function generateShareableImage() {
-  try {
-    const mapContainer = document.getElementById('map');
     const button = document.getElementById('shareMapBtn');
     const originalText = button.innerHTML;
 
-    // Show loading state
-    mapContainer.style.opacity = '0.7';
-    button.innerHTML = '⏳ Generating...';
-    button.disabled = true;
+    try {
+        // Show loading state
+        button.innerHTML = '⏳ Generating...';
+        button.disabled = true;
 
-    // Use MapLibre's canvas directly
-    const canvas = map.getCanvas();
-    canvas.toBlob((blob) => {
-      if (!blob) throw new Error("Failed to create image blob");
-      const url = URL.createObjectURL(blob);
+        // 1. Prepare UI for clean capture (e.g., hide the share button itself)
+        prepareUIForCapture();
+        
+        // 2. Use html2canvas to capture the entire body element
+        // You could capture a specific wrapper, but capturing the body is safe here.
+        const canvas = await html2canvas(document.body, {
+            useCORS: true, // Important for external resources (like map tiles)
+            allowTaint: true, // Should be true if useCORS is true, but useCORS is better
+            backgroundColor: null, // Makes background transparent if not styled
+            scale: 2, // Optional: Capture at a higher resolution for better quality
+            scrollX: 0, // Prevent scrolling issues
+            scrollY: 0, // Prevent scrolling issues
+            windowWidth: document.documentElement.offsetWidth,
+            windowHeight: document.documentElement.offsetHeight,
+        });
 
-      // Reset UI
-      mapContainer.style.opacity = '1';
-      button.innerHTML = originalText;
-      button.disabled = false;
+        // 3. Convert the canvas to a blob
+        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png', 1.0));
+        if (!blob) throw new Error("Failed to create image blob from canvas.");
+        
+        const url = URL.createObjectURL(blob);
 
-      // Show preview / download dialog
-      showShareDialog(url, blob);
-    }, 'image/png', 1.0);
+        // 4. Restore UI
+        restoreUI();
+        button.innerHTML = originalText;
+        button.disabled = false;
 
-  } catch (error) {
-    console.error('Failed to generate image:', error);
+        // 5. Show preview / download dialog
+        showShareDialog(url, blob);
 
-    const mapContainer = document.getElementById('map');
-    const button = document.getElementById('shareMapBtn');
-    mapContainer.style.opacity = '1';
-    if (button) {
-      button.innerHTML = '📸 Share My Map';
-      button.disabled = false;
+    } catch (error) {
+        console.error('Failed to generate image:', error);
+
+        // Ensure UI is restored on error
+        restoreUI(); 
+        if (button) {
+            button.innerHTML = originalText;
+            button.disabled = false;
+        }
+        alert('Sorry, could not generate the image. Please try again.');
     }
-    alert('Sorry, could not generate the image. Please try again.');
-  }
 }
 
 function showShareDialog(imageUrl, blob) {
