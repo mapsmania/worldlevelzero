@@ -19,32 +19,36 @@ html, body {
   right: 20px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 20px;
   z-index: 2;
   background: rgba(255, 255, 255, 0.6);
-  padding: 12px;
+  padding: 16px;
   border-radius: 12px;
   backdrop-filter: blur(6px);
   box-shadow: 0 2px 8px rgba(0,0,0,0.2);
 }
 
 .chart-box {
-  position: relative;
-  width: 140px;
-  height: 160px;
   display: flex;
   flex-direction: column;
   align-items: center;
+  text-align: center;
 }
 
-.chart-box canvas {
+.chart-inner {
+  position: relative;
+  width: 120px;
+  height: 120px;
+}
+
+.chart-inner canvas {
   width: 120px;
   height: 120px;
 }
 
 .chart-label {
   position: absolute;
-  top: 60px; /* center inside the chart */
+  top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
   font-size: 18px;
@@ -58,5 +62,4 @@ html, body {
   font-size: 15px;
   font-weight: 600;
   color: #222;
-  text-align: center;
 }
