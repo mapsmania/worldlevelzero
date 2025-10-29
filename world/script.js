@@ -100,36 +100,43 @@ map.on("load", async () => {
   });
 });
 
-// Helper: Point-in-polygon check
-function findCountryAtPoint(geojson, point) {
-  function pointInPolygon(polygon, [x, y]) {
-    let inside = false;
-    const coords = polygon[0];
-    for (let i = 0, j = coords.length - 1; i < coords.length; j = i++) {
-      const xi = coords[i][0],
-        yi = coords[i][1];
-      const xj = coords[j][0],
-        yj = coords[j][1];
-      const intersect =
-        yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi;
-      if (intersect) inside = !inside;
+// Helper: check if a point is inside a polygon (all rings, handles holes)
+function pointInPolygon(polygon, [x, y]) {
+  let inside = false;
+
+  for (const ring of polygon) {
+    let ringInside = false;
+    for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+      const xi = ring[i][0], yi = ring[i][1];
+      const xj = ring[j][0], yj = ring[j][1];
+      const intersect = yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi;
+      if (intersect) ringInside = !ringInside;
     }
-    return inside;
+    // outer ring toggles inside status
+    if (ringInside) inside = !inside;
   }
 
+  return inside;
+}
+
+// Main function to find the country at a given point
+function findCountryAtPoint(geojson, point) {
   for (const feature of geojson.features) {
-    if (feature.geometry.type === "Polygon") {
-      if (pointInPolygon(feature.geometry.coordinates, [point.lng, point.lat])) {
+    const geom = feature.geometry;
+
+    if (geom.type === "Polygon") {
+      if (pointInPolygon(geom.coordinates, [point.lng, point.lat])) {
         return feature;
       }
-    } else if (feature.geometry.type === "MultiPolygon") {
-      for (const poly of feature.geometry.coordinates) {
+    } else if (geom.type === "MultiPolygon") {
+      for (const poly of geom.coordinates) {
         if (pointInPolygon(poly, [point.lng, point.lat])) {
           return feature;
         }
       }
     }
   }
+
   return null;
 }
 
