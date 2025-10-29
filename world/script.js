@@ -151,7 +151,6 @@ function findCountryAtPoint(geojson, point) {
   return null;
 }
 
-// Update a continent's radial chart
 function updateContinentChart(continent) {
   const total = worldData.features.filter(f => f.properties.continent === continent).length;
   const clickedCount = clickedCountriesByContinent[continent].size;
@@ -161,8 +160,7 @@ function updateContinentChart(continent) {
   chart.data.datasets[0].data = [percent, 100 - percent];
   chart.update();
 
-  // Optional: update label if you have one
   const labelEl = document.getElementById(`${continent.replace(" ", "")}ChartLabel`);
   if (labelEl) labelEl.innerText = `${percent}%`;
-
 }
+
