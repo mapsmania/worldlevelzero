@@ -1,3 +1,5 @@
+let clickedCountries = [];
+let worldData;
 // Track clicked countries per continent
 let clickedCountriesByContinent = {
   Europe: new Set(),
