@@ -282,46 +282,50 @@ async function generateShareableImage() {
     const counters = [document.getElementById('visited-counter'), document.getElementById('world-counter')];
 
     counters.forEach(el => {
-      if (!el) return;
+  if (!el) return;
 
-      const rect = el.getBoundingClientRect();
-      const style = getComputedStyle(el);
+  const rect = el.getBoundingClientRect();
+  const style = getComputedStyle(el);
 
-      const bgColor = style.backgroundColor || 'white';
-      const borderRadius = parseFloat(style.borderRadius) || 8;
-      const shadow = style.boxShadow;
+  const bgColor = style.backgroundColor || 'white';
+  const borderRadius = parseFloat(style.borderRadius) || 8;
+  const shadow = style.boxShadow;
 
-      // Draw shadow manually (simplified)
-      if (shadow && shadow !== 'none') {
-        ctx.shadowColor = shadow.split('rgb')[1] ? `rgb${shadow.split('rgb')[1]}` : 'rgba(0,0,0,0.2)';
-        ctx.shadowBlur = 4;
-        ctx.shadowOffsetX = 0;
-        ctx.shadowOffsetY = 2;
-      }
+  // Shadow
+  if (shadow && shadow !== 'none') {
+    ctx.shadowColor = shadow.split('rgb')[1] ? `rgb${shadow.split('rgb')[1]}` : 'rgba(0,0,0,0.2)';
+    ctx.shadowBlur = 4;
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 2;
+  }
 
-      // Draw rounded rectangle for background
-      ctx.fillStyle = bgColor;
-      roundRect(ctx, rect.left, rect.top, rect.width, rect.height, borderRadius, true, false);
+  // Draw rounded rectangle based on text width + padding
+  const span = el.querySelector('span');
+  const text = span ? span.textContent + el.textContent.replace(span.textContent, '') : el.textContent;
 
-      // Reset shadow for text
-      ctx.shadowColor = 'transparent';
-      ctx.shadowBlur = 0;
+  const fontSize = parseFloat(style.fontSize) || 16;
+  const fontFamily = style.fontFamily || 'sans-serif';
+  ctx.font = `${style.fontWeight || 'bold'} ${fontSize}px ${fontFamily}`;
 
-      // Draw text inside
-      const span = el.querySelector('span');
-      const text = span ? span.textContent + el.textContent.replace(span.textContent, '') : el.textContent;
+  // Calculate text width + horizontal padding
+  const paddingH = parseFloat(style.paddingLeft) || 10;
+  const textWidth = ctx.measureText(text).width;
+  const boxWidth = textWidth + 2 * paddingH;
+  const boxHeight = rect.height;
 
-      const fontSize = parseFloat(style.fontSize) || 16;
-      const fontFamily = style.fontFamily || 'sans-serif';
-      ctx.fillStyle = style.color || '#000';
-      ctx.font = `${style.fontWeight || 'bold'} ${fontSize}px ${fontFamily}`;
-      ctx.textBaseline = 'middle';
+  // Draw rounded rectangle
+  ctx.fillStyle = bgColor;
+  roundRect(ctx, rect.left, rect.top, boxWidth, boxHeight, borderRadius, true, false);
 
-      const paddingLeft = parseFloat(style.paddingLeft) || 10;
-      const paddingTop = parseFloat(style.paddingTop) || 5;
+  // Reset shadow
+  ctx.shadowColor = 'transparent';
+  ctx.shadowBlur = 0;
 
-      ctx.fillText(text, rect.left + paddingLeft, rect.top + rect.height / 2);
-    });
+  // Draw text
+  ctx.fillStyle = style.color || '#000';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(text, rect.left + paddingH, rect.top + rect.height / 2);
+});
 
     // 4️⃣ Convert offscreen canvas to blob
     offscreen.toBlob(blob => {
