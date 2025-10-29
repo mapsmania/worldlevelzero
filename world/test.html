@@ -2,22 +2,25 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>World Map with GeoJSON (MapLibre + OpenFreeMap)</title>
+  <title>World Map with Radial Chart</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link
     href="https://unpkg.com/maplibre-gl@3.6.1/dist/maplibre-gl.css"
     rel="stylesheet"
   />
   <script src="https://unpkg.com/maplibre-gl@3.6.1/dist/maplibre-gl.js"></script>
-  <link
-    href="style.css"
-    rel="stylesheet"
-  />
- </head>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="style.css" />
+</head>
 <body>
   <div id="map"></div>
+
+  <!-- Chart overlay -->
+  <div id="chart-container">
+    <canvas id="europeChart" width="120" height="120"></canvas>
+    <div id="chart-label">0%</div>
+  </div>
 
   <script src="script.js"></script>
 </body>
 </html>
-
