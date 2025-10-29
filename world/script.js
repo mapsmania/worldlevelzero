@@ -75,59 +75,48 @@ map.on("load", async () => {
     return;
   }
 
-  // On map click
+  // ✅ Click handler with toggle behavior
   map.on("click", (e) => {
-  if (!worldData) return;
-  const clickedCountry = findCountryAtPoint(worldData, e.lngLat);
-  if (!clickedCountry) return;
+    if (!worldData) return;
+    const clickedCountry = findCountryAtPoint(worldData, e.lngLat);
+    if (!clickedCountry) return;
 
-  const props = clickedCountry.properties;
-  const name = props.name || props.admin || "Unknown";
-  const continent = props.continent;
+    const props = clickedCountry.properties;
+    const name = props.name || props.admin || "Unknown";
+    const continent = props.continent;
 
-  // Check if the country is already selected
-  const existingIndex = clickedCountries.findIndex(
-    (f) => f.properties.name === name
-  );
+    // Check if the country is already selected
+    const existingIndex = clickedCountries.findIndex(
+      (f) => f.properties.name === name
+    );
 
-  if (existingIndex >= 0) {
-    // ✅ Country already selected → remove it
-    clickedCountries.splice(existingIndex, 1);
+    if (existingIndex >= 0) {
+      // ✅ Country already selected → remove it
+      clickedCountries.splice(existingIndex, 1);
 
-    // Remove from continent set
-    if (continent && clickedCountriesByContinent[continent]) {
-      clickedCountriesByContinent[continent].delete(name);
-      updateContinentChart(continent);
+      // Remove from continent set
+      if (continent && clickedCountriesByContinent[continent]) {
+        clickedCountriesByContinent[continent].delete(name);
+        updateContinentChart(continent);
+      }
+    } else {
+      // ✅ Country not yet selected → add it
+      clickedCountries.push(clickedCountry);
+
+      // Add to continent set
+      if (continent && clickedCountriesByContinent[continent]) {
+        clickedCountriesByContinent[continent].add(name);
+        updateContinentChart(continent);
+      }
     }
 
-    // Update map source
+    // Update map source and totals
     map.getSource("selected-countries").setData({
       type: "FeatureCollection",
       features: clickedCountries,
     });
-
-    // Update totals
     updateTotalClickedCount();
-
-  } else {
-    // ✅ Country not yet selected → add it
-    clickedCountries.push(clickedCountry);
-
-    // Add to continent set
-    if (continent && clickedCountriesByContinent[continent]) {
-      clickedCountriesByContinent[continent].add(name);
-      updateContinentChart(continent);
-    }
-
-    // Update map source
-    map.getSource("selected-countries").setData({
-      type: "FeatureCollection",
-      features: clickedCountries,
-    });
-
-    // Update totals
-    updateTotalClickedCount();
-  }
+  });
 });
 
 // Cursor pointer on hover
@@ -137,7 +126,7 @@ map.on("mousemove", (e) => {
   map.getCanvas().style.cursor = hoveredCountry ? "pointer" : "";
 });
 
-// Helper: check if a point is inside a polygon (handles holes)
+// ✅ Helper: check if a point is inside a polygon (handles holes)
 function pointInPolygon(polygon, [x, y]) {
   let inside = false;
   for (const ring of polygon) {
@@ -153,7 +142,7 @@ function pointInPolygon(polygon, [x, y]) {
   return inside;
 }
 
-// Main function to find the country at a given point
+// ✅ Main function to find the country at a given point
 function findCountryAtPoint(geojson, point) {
   for (const feature of geojson.features) {
     const geom = feature.geometry;
