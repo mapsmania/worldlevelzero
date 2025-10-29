@@ -34,22 +34,25 @@
 </head>
 <body>
 
-  <div id="captureContainer" style="position: relative;">
-  <div id="map" style="width: 100%; height: 600px;"></div>
+  <div id="map"></div>
 
-  <!-- Top counters -->
-  <div class="absolute top-4 left-1/2 -translate-x-1/2 flex gap-4 z-20">
-    <div id="visited-counter"
-         class="bg-white/90 backdrop-blur-md px-4 py-2 rounded-lg shadow-md text-gray-800 font-semibold">
-      <span id="totalClicked">0</span> Countries Visited
-    </div>
-
-    <div id="world-counter"
-         class="bg-white/90 backdrop-blur-md px-4 py-2 rounded-lg shadow-md text-gray-800 font-semibold">
-      <span id="worldPercent">0%</span> World Traveled
-    </div>
+ <div class="absolute top-4 left-1/2 -translate-x-1/2 flex gap-4 z-20">
+  <!-- Total Countries Visited -->
+  <div id="visited-counter"
+       class="bg-white/90 backdrop-blur-md px-4 py-2 rounded-lg shadow-md text-gray-800 font-semibold">
+    <span id="totalClicked">0</span> Countries Visited
   </div>
 
+  <!-- World Traveled -->
+  <div id="world-counter"
+       class="bg-white/90 backdrop-blur-md px-4 py-2 rounded-lg shadow-md text-gray-800 font-semibold">
+    <span id="worldPercent">0%</span> World Traveled
+  </div>
+</div>
+
+<button id="shareMapBtn" class="share-button">
+  📸 Share My Map
+</button>
 
 
   <!-- Charts panel -->
@@ -151,11 +154,6 @@
   </div>
 
 </div>
-
-</div>
-
-<!-- Share button -->
-<button id="shareMapBtn" class="share-button">📸 Share My Map</button>
 
 
   <script src="script.js"></script>
