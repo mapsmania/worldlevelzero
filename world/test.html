@@ -4,68 +4,93 @@
   <meta charset="utf-8" />
   <title>World Map with Radial Charts</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- Load Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Load MapLibre and Chart.js -->
   <link
     href="https://unpkg.com/maplibre-gl@3.6.1/dist/maplibre-gl.css"
     rel="stylesheet"
   />
   <script src="https://unpkg.com/maplibre-gl@3.6.1/dist/maplibre-gl.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <link rel="stylesheet" href="style.css" />
+  
+  <!-- Link to the external CSS file (style.css) -->
+  <link rel="stylesheet" href="style.css">
+
+  <script>
+    // Set a placeholder 'Inter' font via Tailwind config
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+        },
+      },
+    };
+  </script>
 </head>
-<body>
-  <div id="map"></div>
+<body class="bg-gray-100">
+  <!-- Placeholder Map -->
+  <div id="map" class="shadow-lg">
+    <div class="flex items-center justify-center h-full text-gray-500 font-semibold">
+      [Placeholder for MapLibre Map]
+    </div>
+  </div>
 
   <!-- Charts panel -->
- <div id="charts-wrapper">
-  <div class="chart-box">
-    <div class="chart-inner">
-      <canvas id="EuropeChart" width="120" height="120"></canvas>
-      <div class="chart-label" id="EuropeChartLabel">0%</div>
+  <div id="charts-wrapper">
+    <!-- Chart structure remains the same -->
+    <div class="chart-box">
+      <div class="chart-inner">
+        <canvas id="EuropeChart" width="120" height="120"></canvas>
+        <div class="chart-label" id="EuropeChartLabel">0%</div>
+      </div>
+      <div class="continent-name">Europe</div>
     </div>
-    <div class="continent-name">Europe</div>
+
+    <div class="chart-box">
+      <div class="chart-inner">
+        <canvas id="AsiaChart" width="120" height="120"></canvas>
+        <div class="chart-label" id="AsiaChartLabel">0%</div>
+      </div>
+      <div class="continent-name">Asia</div>
+    </div>
+
+    <div class="chart-box">
+      <div class="chart-inner">
+        <canvas id="AfricaChart" width="120" height="120"></canvas>
+        <div class="chart-label" id="AfricaChartLabel">0%</div>
+      </div>
+      <div class="continent-name">Africa</div>
+    </div>
+
+    <div class="chart-box">
+      <div class="chart-inner">
+        <canvas id="NorthAmericaChart" width="120" height="120"></canvas>
+        <div class="chart-label" id="NorthAmericaChartLabel">0%</div>
+      </div>
+      <div class="continent-name">North America</div>
+    </div>
+
+    <div class="chart-box">
+      <div class="chart-inner">
+        <canvas id="SouthAmericaChart" width="120" height="120"></canvas>
+        <div class="chart-label" id="SouthAmericaChartLabel">0%</div>
+      </div>
+      <div class="continent-name">South America</div>
+    </div>
+
+    <div class="chart-box">
+      <div class="chart-inner">
+        <canvas id="OceaniaChart" width="120" height="120"></canvas>
+        <div class="chart-label" id="OceaniaChartLabel">0%</div>
+      </div>
+      <div class="continent-name">Oceania</div>
+    </div>
   </div>
 
-  <div class="chart-box">
-    <div class="chart-inner">
-      <canvas id="AsiaChart" width="120" height="120"></canvas>
-      <div class="chart-label" id="AsiaChartLabel">0%</div>
-    </div>
-    <div class="continent-name">Asia</div>
-  </div>
-
-  <div class="chart-box">
-    <div class="chart-inner">
-      <canvas id="AfricaChart" width="120" height="120"></canvas>
-      <div class="chart-label" id="AfricaChartLabel">0%</div>
-    </div>
-    <div class="continent-name">Africa</div>
-  </div>
-
-  <div class="chart-box">
-    <div class="chart-inner">
-      <canvas id="NorthAmericaChart" width="120" height="120"></canvas>
-      <div class="chart-label" id="NorthAmericaChartLabel">0%</div>
-    </div>
-    <div class="continent-name">North America</div>
-  </div>
-
-  <div class="chart-box">
-    <div class="chart-inner">
-      <canvas id="SouthAmericaChart" width="120" height="120"></canvas>
-      <div class="chart-label" id="SouthAmericaChartLabel">0%</div>
-    </div>
-    <div class="continent-name">South America</div>
-  </div>
-
-  <div class="chart-box">
-    <div class="chart-inner">
-      <canvas id="OceaniaChart" width="120" height="120"></canvas>
-      <div class="chart-label" id="OceaniaChartLabel">0%</div>
-    </div>
-    <div class="continent-name">Oceania</div>
-  </div>
-</div>
-
+  <!-- Your external script is referenced here -->
   <script src="script.js"></script>
 </body>
 </html>
