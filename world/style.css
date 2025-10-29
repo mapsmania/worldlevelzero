@@ -15,33 +15,40 @@ html, body {
 }
 
 #charts-wrapper {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 24px; /* Tailwind gap-6 */
-  padding: 20px;
-  background-color: #f8fafc; /* Tailwind bg-slate-50 */
-  border-top: 1px solid #e2e8f0; /* Tailwind border-slate-200 */
-  bottom: 10px;
-  background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(8px); box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.25);
+  @apply flex flex-wrap justify-center gap-6 p-5 border-t border-slate-200 bg-white shadow-[0_-2px_8px_rgba(0,0,0,0.25)];
+  
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  z-index: 10;
+
+  /* remove transparency to ensure solid white background */
+  background: white !important;
+  backdrop-filter: none;
 }
 
 .chart-box {
-  /* Centering the chart and text inside this container */
-  text-align: center; 
-  padding: 10px;
-  border-radius: 0.5rem; /* Tailwind rounded-lg */
-  background-color: white;
-  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  @apply text-center p-3 rounded-lg shadow-md bg-white;
+  position: relative;
+  z-index: 2;
 }
 
 .chart-inner {
   position: relative;
-  /* Match canvas size (120x120) for perfect label centering */
-  width: 120px; 
+  width: 120px;
   height: 120px;
-  z-index: 1; 
-  margin: 0 auto; /* Ensure the inner chart is centered within its box */
+  margin: 0 auto;
+  z-index: 1;
+  background: white; /* ensures the canvas area doesn’t show map behind */
+  border-radius: 50%;
+}
+
+.chart-inner canvas {
+  width: 120px;
+  height: 120px;
+  background-color: white; /* <-- critical to stop transparency */
+  border-radius: 50%;
 }
 
 .chart-label {
@@ -53,19 +60,15 @@ html, body {
   font-weight: bold;
   color: #333;
   pointer-events: none;
-  z-index: 2; 
-  text-align: center; 
+  z-index: 3;
 }
 
 .continent-name {
-  /* This is the gap/margin under the radial chart (10px) */
-  margin-top: 10px; 
+  margin-top: 10px;
   font-size: 15px;
   font-weight: 600;
   color: #222;
   position: relative;
-  z-index: 3; 
-  /* Ensures continent name text is perfectly centered */
+  z-index: 3;
   text-align: center;
 }
-
