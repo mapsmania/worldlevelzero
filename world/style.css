@@ -13,25 +13,35 @@ html, body {
   height: 100%;
 }
 
-/* Chart overlay */
-#chart-container {
+/* Charts vertical panel */
+#charts-wrapper {
   position: absolute;
   top: 20px;
   right: 20px;
-  width: 120px;
-  height: 120px;
-  background: rgba(255, 255, 255, 0.8);
-  border-radius: 50%;
   display: flex;
-  justify-content: center;
-  align-items: center;
   flex-direction: column;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  gap: 10px; /* space between charts */
+  z-index: 2; /* ensure overlay on map */
 }
 
-#chart-label {
+.chart-box {
+  position: relative;
+  width: 120px;
+  height: 120px;
+}
+
+.chart-box canvas {
+  width: 120px;
+  height: 120px;
+}
+
+.chart-box div {
   position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   font-size: 18px;
   font-weight: bold;
   color: #333;
+  pointer-events: none;
 }
