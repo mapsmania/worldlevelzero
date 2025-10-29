@@ -1,7 +1,11 @@
+// ===============================
+// Global variables
+// ===============================
 let clickedCountries = [];
 let worldData;
+
 // Track clicked countries per continent
-let clickedCountriesByContinent = {
+const clickedCountriesByContinent = {
   Europe: new Set(),
   Asia: new Set(),
   Africa: new Set(),
@@ -10,7 +14,9 @@ let clickedCountriesByContinent = {
   Oceania: new Set(),
 };
 
+// ===============================
 // Initialize MapLibre
+// ===============================
 const map = new maplibregl.Map({
   container: "map",
   style: "https://tiles.openfreemap.org/styles/positron",
@@ -18,13 +24,17 @@ const map = new maplibregl.Map({
   zoom: 2,
 });
 
-// Define continents
+// ===============================
+// Initialize Chart.js Charts
+// ===============================
 const continents = ["Europe", "Asia", "Africa", "North America", "South America", "Oceania"];
 const continentCharts = {};
 
-// Initialize Chart.js charts per continent
 continents.forEach(cont => {
-  const ctx = document.getElementById(`${cont.replace(" ", "")}Chart`).getContext("2d");
+  const canvas = document.getElementById(`${cont.replace(" ", "")}Chart`);
+  if (!canvas) return;
+
+  const ctx = canvas.getContext("2d");
   continentCharts[cont] = new Chart(ctx, {
     type: "doughnut",
     data: {
@@ -44,8 +54,35 @@ continents.forEach(cont => {
   });
 });
 
-// Add empty GeoJSON source on load
+// ===============================
+// Map setup and data loading
+// ===============================
 map.on("load", async () => {
+  // Load GeoJSON once
+  try {
+    const response = await fetch("world.geojson");
+    worldData = await response.json();
+  } catch (err) {
+    console.error("Failed to load world.geojson:", err);
+    return;
+  }
+
+  // Add world countries source (for fast spatial querying)
+  map.addSource("world-countries", {
+    type: "geojson",
+    data: worldData,
+  });
+
+  map.addLayer({
+    id: "world-countries-fill",
+    type: "fill",
+    source: "world-countries",
+    paint: {
+      "fill-opacity": 0, // invisible but queryable
+    },
+  });
+
+  // Add selected countries overlay layers
   map.addSource("selected-countries", {
     type: "geojson",
     data: { type: "FeatureCollection", features: [] },
@@ -65,112 +102,62 @@ map.on("load", async () => {
     paint: { "line-color": "#cc5200", "line-width": 2 },
   });
 
-  // Load GeoJSON once
-  try {
-    const response = await fetch("world.geojson");
-    worldData = await response.json();
-  } catch (err) {
-    console.error("Failed to load world.geojson:", err);
-    return;
-  }
-
-  // On map click
+  // ===============================
+  // Handle map clicks
+  // ===============================
   map.on("click", (e) => {
-  if (!worldData) return;
-  const clickedCountry = findCountryAtPoint(worldData, e.lngLat);
-  if (!clickedCountry) return;
+    const features = map.queryRenderedFeatures(e.point, { layers: ["world-countries-fill"] });
+    if (!features.length) return;
 
-  const props = clickedCountry.properties;
-  const name = props.name || props.admin || "Unknown";
-  const continent = props.continent;
+    const clickedCountry = features[0];
+    const props = clickedCountry.properties;
+    const name = props.name || props.admin || "Unknown";
+    const id = props.iso_a3 || name;
+    const continent = props.continent;
 
-  // Check if the country is already selected
-  const existingIndex = clickedCountries.findIndex(
-    (f) => f.properties.name === name
-  );
+    const existingIndex = clickedCountries.findIndex(
+      (f) => (f.properties.iso_a3 || f.properties.name) === id
+    );
 
-  if (existingIndex >= 0) {
-    // ✅ Country already selected → remove it
-    clickedCountries.splice(existingIndex, 1);
-
-    // Remove from continent set
-    if (continent && clickedCountriesByContinent[continent]) {
-      clickedCountriesByContinent[continent].delete(name);
-      updateContinentChart(continent);
-    }
-
-    // Update map source
-    map.getSource("selected-countries").setData({
-      type: "FeatureCollection",
-      features: clickedCountries,
-    });
-
-    // Update totals
-    updateTotalClickedCount();
-
-  } else {
-    // ✅ Country not yet selected → add it
-    clickedCountries.push(clickedCountry);
-
-    // Add to continent set
-    if (continent && clickedCountriesByContinent[continent]) {
-      clickedCountriesByContinent[continent].add(name);
-      updateContinentChart(continent);
-    }
-
-    // Update map source
-    map.getSource("selected-countries").setData({
-      type: "FeatureCollection",
-      features: clickedCountries,
-    });
-
-    // Update totals
-    updateTotalClickedCount();
-  }
-});
-
-});
-
-// Cursor pointer on hover
-map.on("mousemove", (e) => {
-  if (!worldData) return;
-  const hoveredCountry = findCountryAtPoint(worldData, e.lngLat);
-  map.getCanvas().style.cursor = hoveredCountry ? "pointer" : "";
-});
-
-// Helper: check if a point is inside a polygon (handles holes)
-function pointInPolygon(polygon, [x, y]) {
-  let inside = false;
-  for (const ring of polygon) {
-    let ringInside = false;
-    for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
-      const xi = ring[i][0], yi = ring[i][1];
-      const xj = ring[j][0], yj = ring[j][1];
-      const intersect = yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi;
-      if (intersect) ringInside = !ringInside;
-    }
-    if (ringInside) inside = !inside;
-  }
-  return inside;
-}
-
-// Main function to find the country at a given point
-function findCountryAtPoint(geojson, point) {
-  for (const feature of geojson.features) {
-    const geom = feature.geometry;
-    if (geom.type === "Polygon") {
-      if (pointInPolygon(geom.coordinates, [point.lng, point.lat])) return feature;
-    } else if (geom.type === "MultiPolygon") {
-      for (const poly of geom.coordinates) {
-        if (pointInPolygon(poly, [point.lng, point.lat])) return feature;
+    if (existingIndex >= 0) {
+      // ✅ Country already selected → remove it
+      clickedCountries.splice(existingIndex, 1);
+      if (continent && clickedCountriesByContinent[continent]) {
+        clickedCountriesByContinent[continent].delete(name);
+      }
+    } else {
+      // ✅ Add new selection
+      clickedCountries.push(clickedCountry);
+      if (continent && clickedCountriesByContinent[continent]) {
+        clickedCountriesByContinent[continent].add(name);
       }
     }
-  }
-  return null;
-}
 
+    // Update visuals and charts
+    if (continent && continentCharts[continent]) updateContinentChart(continent);
+    updateTotalClickedCount();
+
+    // Update map overlay
+    map.getSource("selected-countries").setData({
+      type: "FeatureCollection",
+      features: clickedCountries,
+    });
+  });
+
+  // ===============================
+  // Hover pointer
+  // ===============================
+  map.on("mousemove", (e) => {
+    const features = map.queryRenderedFeatures(e.point, { layers: ["world-countries-fill"] });
+    map.getCanvas().style.cursor = features.length ? "pointer" : "";
+  });
+});
+
+// ===============================
+// Chart + Counter Update Helpers
+// ===============================
 function updateContinentChart(continent) {
-  const total = worldData.features.filter(f => f.properties.continent === continent).length;
+  const total = worldData.features.filter(f => f.properties.continent === continent).length || 1;
   const clickedCount = clickedCountriesByContinent[continent].size;
   const percent = Math.round((clickedCount / total) * 100);
 
