@@ -279,3 +279,5 @@ async function generateShareableImage() {
     alert('Sorry, could not generate the image. Please try again.');
   }
 }
+
+document.getElementById('shareMapBtn').addEventListener('click', generateShareableImage);
