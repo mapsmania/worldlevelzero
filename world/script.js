@@ -258,102 +258,122 @@ function updateTotalClickedCount() {
 // ===============================
 // Share Image Functionality
 // ===============================
-async function generateShareableImage() {
-  try {
-    const mapCanvas = map.getCanvas();
-    const button = document.getElementById('shareMapBtn');
-    const originalText = button.innerHTML;
+function roundRect(ctx, x, y, width, height, radius, fill, stroke) {
+  if (typeof radius === 'number') {
+    radius = { tl: radius, tr: radius, br: radius, bl: radius };
+  } else {
+    const defaultRadius = { tl: 0, tr: 0, br: 0, bl: 0 };
+    for (let side in defaultRadius) {
+      radius[side] = radius[side] || 0;
+    }
+  }
+  ctx.beginPath();
+  ctx.moveTo(x + radius.tl, y);
+  ctx.lineTo(x + width - radius.tr, y);
+  ctx.quadraticCurveTo(x + width, y, x + width, y + radius.tr);
+  ctx.lineTo(x + width, y + height - radius.br);
+  ctx.quadraticCurveTo(x + width, y + height, x + width - radius.br, y + height);
+  ctx.lineTo(x + radius.bl, y + height);
+  ctx.quadraticCurveTo(x, y + height, x, y + height - radius.bl);
+  ctx.lineTo(x, y + radius.tl);
+  ctx.quadraticCurveTo(x, y, x + radius.tl, y);
+  ctx.closePath();
+  if (fill) ctx.fill();
+  if (stroke) ctx.stroke();
+}
 
-    // Show loading state
-    mapCanvas.style.opacity = '0.7';
+async function generateShareableImage() {
+  const button = document.getElementById('shareMapBtn');
+  const originalText = button.innerHTML;
+
+  try {
     button.innerHTML = '⏳ Generating...';
     button.disabled = true;
 
-    // 1️⃣ Create offscreen canvas
-    const offscreen = document.createElement('canvas');
-    offscreen.width = mapCanvas.width;
-    offscreen.height = mapCanvas.height;
-    const ctx = offscreen.getContext('2d');
+    // 1️⃣ Capture MapLibre canvas
+    const mapCanvas = map.getCanvas();
+    const canvas = document.createElement('canvas');
+    canvas.width = mapCanvas.width;
+    canvas.height = mapCanvas.height;
+    const ctx = canvas.getContext('2d');
 
-    // 2️⃣ Draw the map
+    // Draw map
     ctx.drawImage(mapCanvas, 0, 0);
 
-    // 3️⃣ Draw the top counters with styles
-    const counters = [document.getElementById('visited-counter'), document.getElementById('world-counter')];
+    // 2️⃣ Draw top counters
+    const countersContainer = document.querySelector('.absolute.top-4.left-1\\/2');
+    if (countersContainer) {
+      const counterEls = countersContainer.querySelectorAll('div[id$="counter"]');
+      const gap = 16;
 
-    counters.forEach(el => {
-  if (!el) return;
+      let xOffset = 0; // start left for first counter
+      counterEls.forEach(el => {
+        if (!el) return;
+        const rect = el.getBoundingClientRect();
+        const style = getComputedStyle(el);
 
-  const rect = el.getBoundingClientRect();
-  const style = getComputedStyle(el);
+        const bgColor = style.backgroundColor || 'white';
+        const borderRadius = parseFloat(style.borderRadius) || 8;
+        const shadow = style.boxShadow;
 
-  const bgColor = style.backgroundColor || 'white';
-  const borderRadius = parseFloat(style.borderRadius) || 8;
-  const shadow = style.boxShadow;
+        // Shadow
+        if (shadow && shadow !== 'none') {
+          ctx.shadowColor = 'rgba(0,0,0,0.2)';
+          ctx.shadowBlur = 4;
+          ctx.shadowOffsetX = 0;
+          ctx.shadowOffsetY = 2;
+        }
 
-  // Shadow
-  if (shadow && shadow !== 'none') {
-    ctx.shadowColor = shadow.split('rgb')[1] ? `rgb${shadow.split('rgb')[1]}` : 'rgba(0,0,0,0.2)';
-    ctx.shadowBlur = 4;
-    ctx.shadowOffsetX = 0;
-    ctx.shadowOffsetY = 2;
-  }
+        // Text
+        const span = el.querySelector('span');
+        const text = span ? span.textContent + el.textContent.replace(span.textContent, '') : el.textContent;
 
-  // Draw rounded rectangle based on text width + padding
-  const span = el.querySelector('span');
-  const text = span ? span.textContent + el.textContent.replace(span.textContent, '') : el.textContent;
+        const fontSize = parseFloat(style.fontSize) || 16;
+        const fontWeight = style.fontWeight || 'bold';
+        const fontFamily = style.fontFamily || 'sans-serif';
+        ctx.font = `${fontWeight} ${fontSize}px ${fontFamily}`;
+        ctx.textBaseline = 'middle';
 
-  const fontSize = parseFloat(style.fontSize) || 16;
-  const fontFamily = style.fontFamily || 'sans-serif';
-  ctx.font = `${style.fontWeight || 'bold'} ${fontSize}px ${fontFamily}`;
+        const paddingH = parseFloat(style.paddingLeft) || 12;
+        const paddingV = parseFloat(style.paddingTop) || 6;
 
-  // Calculate text width + horizontal padding
-  const paddingH = parseFloat(style.paddingLeft) || 10;
-  const textWidth = ctx.measureText(text).width;
-  const boxWidth = textWidth + 2 * paddingH;
-  const boxHeight = rect.height;
+        const textWidth = ctx.measureText(text).width;
+        const boxWidth = textWidth + 2 * paddingH;
+        const boxHeight = rect.height;
 
-  // Draw rounded rectangle
-  ctx.fillStyle = bgColor;
-  roundRect(ctx, rect.left, rect.top, boxWidth, boxHeight, borderRadius, true, false);
+        // Draw rectangle background
+        ctx.fillStyle = bgColor;
+        roundRect(ctx, xOffset, 16, boxWidth, boxHeight, borderRadius, true, false);
 
-  // Reset shadow
-  ctx.shadowColor = 'transparent';
-  ctx.shadowBlur = 0;
+        // Reset shadow
+        ctx.shadowColor = 'transparent';
+        ctx.shadowBlur = 0;
 
-  // Draw text
-  ctx.fillStyle = style.color || '#000';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(text, rect.left + paddingH, rect.top + rect.height / 2);
-});
+        // Draw text
+        ctx.fillStyle = style.color || '#000';
+        ctx.fillText(text, xOffset + paddingH, 16 + boxHeight / 2);
 
-    // 4️⃣ Convert offscreen canvas to blob
-    offscreen.toBlob(blob => {
-      if (!blob) throw new Error("Failed to create image blob");
-      const url = URL.createObjectURL(blob);
+        xOffset += boxWidth + gap;
+      });
+    }
 
-      // Reset UI
-      mapCanvas.style.opacity = '1';
-      button.innerHTML = originalText;
-      button.disabled = false;
+    // 3️⃣ Convert canvas to blob and show download dialog
+    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png', 1.0));
+    const url = URL.createObjectURL(blob);
 
-      // Show preview / download dialog
-      showShareDialog(url, blob);
-    }, 'image/png', 1.0);
+    button.innerHTML = originalText;
+    button.disabled = false;
+
+    showShareDialog(url, blob);
 
   } catch (error) {
     console.error('Failed to generate image:', error);
-
-    const mapCanvas = map.getCanvas();
-    const button = document.getElementById('shareMapBtn');
-    mapCanvas.style.opacity = '1';
-    if (button) {
-      button.innerHTML = '📸 Share My Map';
-      button.disabled = false;
-    }
+    button.innerHTML = originalText;
+    button.disabled = false;
     alert('Sorry, could not generate the image. Please try again.');
   }
 }
+
 
 // Helper function to draw rounded rectangle
 function roundRect(ctx, x, y, width, height, radius, fill = true, stroke = false) {
