@@ -106,6 +106,13 @@ map.on("load", async () => {
   });
 });
 
+map.on("mousemove", (e) => {
+  if (!worldData) return;
+  
+  const hoveredCountry = findCountryAtPoint(worldData, e.lngLat);
+  map.getCanvas().style.cursor = hoveredCountry ? "pointer" : "";
+});
+
 // Helper: check if a point is inside a polygon (all rings, handles holes)
 function pointInPolygon(polygon, [x, y]) {
   let inside = false;
