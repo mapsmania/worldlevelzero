@@ -37,22 +37,24 @@ continents.forEach(cont => {
 
   const ctx = canvas.getContext("2d");
   continentCharts[cont] = new Chart(ctx, {
-    type: "doughnut",
-    data: {
-      datasets: [{
-        data: [0, 100],
-        backgroundColor: ["#0077ff", "#e0e0e0"],
-        borderWidth: 0,
-        cutout: "75%",
-      }],
-    },
-    options: {
-      responsive: false,
-      rotation: -90,
-      circumference: 360,
-      plugins: { legend: { display: false }, tooltip: { enabled: false } },
-    },
-  });
+  type: "doughnut",
+  data: {
+    datasets: [{
+      data: [0, 100],
+      backgroundColor: ["#0077ff", "#e0e0e0"],
+      borderWidth: 0,
+      cutout: "75%",
+    }],
+  },
+  options: {
+    responsive: false,
+    rotation: -90,
+    circumference: 360,
+    animation: false, // 🚀 disable animations completely
+    plugins: { legend: { display: false }, tooltip: { enabled: false } },
+  },
+});
+
 });
 
 // ===============================
