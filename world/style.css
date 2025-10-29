@@ -22,6 +22,8 @@ html, body {
   padding: 20px;
   background-color: #f8fafc; /* Tailwind bg-slate-50 */
   border-top: 1px solid #e2e8f0; /* Tailwind border-slate-200 */
+  bottom: 10px;
+  background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(8px); box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.25);
 }
 
 .chart-box {
