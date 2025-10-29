@@ -74,8 +74,9 @@ map.on("load", async () => {
 
     // Only add the country if not already clicked
     const alreadyClicked = clickedCountries.some(
-      (f) => f.properties.iso_a3 === props.iso_a3
+      (f) => f.properties.name === props.name
     );
+
     if (!alreadyClicked) {
       clickedCountries.push(clickedCountry);
 
