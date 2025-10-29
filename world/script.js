@@ -269,7 +269,7 @@ async function generateShareableImage() {
     button.innerHTML = '⏳ Generating...';
     button.disabled = true;
 
-    // 1️⃣ Create an offscreen canvas to combine map + counters
+    // 1️⃣ Create offscreen canvas
     const offscreen = document.createElement('canvas');
     offscreen.width = mapCanvas.width;
     offscreen.height = mapCanvas.height;
@@ -278,47 +278,52 @@ async function generateShareableImage() {
     // 2️⃣ Draw the map
     ctx.drawImage(mapCanvas, 0, 0);
 
-    // 3️⃣ Draw the top counters
-    const visitedCounter = document.getElementById('visited-counter');
-    const worldCounter = document.getElementById('world-counter');
+    // 3️⃣ Draw the top counters with styles
+    const counters = [document.getElementById('visited-counter'), document.getElementById('world-counter')];
 
-    [visitedCounter, worldCounter].forEach(el => {
+    counters.forEach(el => {
       if (!el) return;
 
       const rect = el.getBoundingClientRect();
-
-      // Get computed styles
       const style = getComputedStyle(el);
+
       const bgColor = style.backgroundColor || 'white';
-      const color = style.color || 'black';
-      const font = style.font || '16px sans-serif';
-      const padding = parseFloat(style.padding || 8);
+      const borderRadius = parseFloat(style.borderRadius) || 8;
+      const shadow = style.boxShadow;
 
-      // Draw background rectangle
+      // Draw shadow manually (simplified)
+      if (shadow && shadow !== 'none') {
+        ctx.shadowColor = shadow.split('rgb')[1] ? `rgb${shadow.split('rgb')[1]}` : 'rgba(0,0,0,0.2)';
+        ctx.shadowBlur = 4;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 2;
+      }
+
+      // Draw rounded rectangle for background
       ctx.fillStyle = bgColor;
-      ctx.fillRect(
-        rect.left,
-        rect.top,
-        rect.width,
-        rect.height
-      );
+      roundRect(ctx, rect.left, rect.top, rect.width, rect.height, borderRadius, true, false);
 
-      // Draw the text inside the div
-      ctx.fillStyle = color;
-      ctx.font = font;
-      ctx.textBaseline = 'middle';
+      // Reset shadow for text
+      ctx.shadowColor = 'transparent';
+      ctx.shadowBlur = 0;
 
+      // Draw text inside
       const span = el.querySelector('span');
       const text = span ? span.textContent + el.textContent.replace(span.textContent, '') : el.textContent;
 
-      ctx.fillText(
-        text,
-        rect.left + padding,
-        rect.top + rect.height / 2
-      );
+      const fontSize = parseFloat(style.fontSize) || 16;
+      const fontFamily = style.fontFamily || 'sans-serif';
+      ctx.fillStyle = style.color || '#000';
+      ctx.font = `${style.fontWeight || 'bold'} ${fontSize}px ${fontFamily}`;
+      ctx.textBaseline = 'middle';
+
+      const paddingLeft = parseFloat(style.paddingLeft) || 10;
+      const paddingTop = parseFloat(style.paddingTop) || 5;
+
+      ctx.fillText(text, rect.left + paddingLeft, rect.top + rect.height / 2);
     });
 
-    // 4️⃣ Convert combined canvas to blob
+    // 4️⃣ Convert offscreen canvas to blob
     offscreen.toBlob(blob => {
       if (!blob) throw new Error("Failed to create image blob");
       const url = URL.createObjectURL(blob);
@@ -346,6 +351,29 @@ async function generateShareableImage() {
   }
 }
 
+// Helper function to draw rounded rectangle
+function roundRect(ctx, x, y, width, height, radius, fill = true, stroke = false) {
+  if (typeof radius === 'number') {
+    radius = { tl: radius, tr: radius, br: radius, bl: radius };
+  } else {
+    radius = Object.assign({ tl: 0, tr: 0, br: 0, bl: 0 }, radius);
+  }
+
+  ctx.beginPath();
+  ctx.moveTo(x + radius.tl, y);
+  ctx.lineTo(x + width - radius.tr, y);
+  ctx.quadraticCurveTo(x + width, y, x + width, y + radius.tr);
+  ctx.lineTo(x + width, y + height - radius.br);
+  ctx.quadraticCurveTo(x + width, y + height, x + width - radius.br, y + height);
+  ctx.lineTo(x + radius.bl, y + height);
+  ctx.quadraticCurveTo(x, y + height, x, y + height - radius.bl);
+  ctx.lineTo(x, y + radius.tl);
+  ctx.quadraticCurveTo(x, y, x + radius.tl, y);
+  ctx.closePath();
+
+  if (fill) ctx.fill();
+  if (stroke) ctx.stroke();
+}
 
 function showShareDialog(imageUrl, blob) {
   // Remove existing dialog if any
