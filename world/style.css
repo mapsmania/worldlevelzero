@@ -45,11 +45,7 @@ html, body {
   position: relative;
   width: 100px;
   height: 100px;
-}
-
-.chart-inner canvas {
-  width: 100px;
-  height: 100px;
+  z-index: 1; /* ensure chart layer stays above background */
 }
 
 .chart-label {
@@ -61,11 +57,14 @@ html, body {
   font-weight: bold;
   color: #333;
   pointer-events: none;
+  z-index: 2; /* keep percentage above the canvas */
 }
 
 .continent-name {
-  margin-top: 8px;
+  margin-top: 10px;
   font-size: 15px;
   font-weight: 600;
   color: #222;
+  position: relative;
+  z-index: 3; /* ensure labels always render above chart */
 }
