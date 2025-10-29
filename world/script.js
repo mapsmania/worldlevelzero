@@ -58,6 +58,12 @@ continents.forEach(cont => {
 // Load Map + Data
 // ===============================
 map.on("load", async () => {
+  // screencapture button event
+  const shareButton = document.getElementById('shareMapBtn');
+  if (shareButton) {
+  shareButton.addEventListener('click', generateShareableImage);
+  }
+
   // Load GeoJSON once
   try {
     const response = await fetch("world.geojson");
