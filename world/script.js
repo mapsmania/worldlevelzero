@@ -293,18 +293,23 @@ async function generateShareableImage() {
         button.innerHTML = '⏳ Generating...';
         button.disabled = true;
 
+        // 💡 NEW STEP: Force an update on all Chart.js instances.
+        // This ensures the canvases are fully rendered and settled before html2canvas starts.
+        Object.values(continentCharts).forEach(chart => {
+             chart.update(); 
+        });
+
         // 1. Prepare UI for clean capture (e.g., hide the share button itself)
         prepareUIForCapture();
         
         // 2. Use html2canvas to capture the entire body element
-        // You could capture a specific wrapper, but capturing the body is safe here.
         const canvas = await html2canvas(document.body, {
-            useCORS: true, // Important for external resources (like map tiles)
-            allowTaint: true, // Should be true if useCORS is true, but useCORS is better
-            backgroundColor: null, // Makes background transparent if not styled
-            scale: 2, // Optional: Capture at a higher resolution for better quality
-            scrollX: 0, // Prevent scrolling issues
-            scrollY: 0, // Prevent scrolling issues
+            useCORS: true, 
+            allowTaint: true, 
+            backgroundColor: null, 
+            scale: 2, 
+            scrollX: 0, 
+            scrollY: 0, 
             windowWidth: document.documentElement.offsetWidth,
             windowHeight: document.documentElement.offsetHeight,
         });
