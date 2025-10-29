@@ -162,5 +162,12 @@ function updateContinentChart(continent) {
 
 function updateTotalClickedCount() {
   const totalEl = document.getElementById("totalClicked");
+  const percentEl = document.getElementById("worldPercent");
+  const totalCountries = worldData ? worldData.features.length : 195;
+
   if (totalEl) totalEl.textContent = clickedCountries.length;
+  if (percentEl) {
+    const percent = ((clickedCountries.length / totalCountries) * 100).toFixed(1);
+    percentEl.textContent = `${percent}%`;
+  }
 }
