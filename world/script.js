@@ -102,39 +102,23 @@ map.on("load", async () => {
         clickedCountriesByContinent[continent].add(name);
         updateContinentChart(continent);
       }
+
+      // ✅ Update total clicked count
+      updateTotalClickedCount();
     }
   });
-
-  if (!alreadyClicked) {
-  clickedCountries.push(clickedCountry);
-
-  map.getSource("selected-countries").setData({
-    type: "FeatureCollection",
-    features: clickedCountries,
-  });
-
-  if (continent && clickedCountriesByContinent[continent]) {
-    clickedCountriesByContinent[continent].add(name);
-    updateContinentChart(continent);
-  }
-
-  // ✅ Update total clicked count
-  updateTotalClickedCount();
-}
-
 });
 
+// Cursor pointer on hover
 map.on("mousemove", (e) => {
   if (!worldData) return;
-  
   const hoveredCountry = findCountryAtPoint(worldData, e.lngLat);
   map.getCanvas().style.cursor = hoveredCountry ? "pointer" : "";
 });
 
-// Helper: check if a point is inside a polygon (all rings, handles holes)
+// Helper: check if a point is inside a polygon (handles holes)
 function pointInPolygon(polygon, [x, y]) {
   let inside = false;
-
   for (const ring of polygon) {
     let ringInside = false;
     for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
@@ -145,7 +129,6 @@ function pointInPolygon(polygon, [x, y]) {
     }
     if (ringInside) inside = !inside;
   }
-
   return inside;
 }
 
@@ -153,20 +136,14 @@ function pointInPolygon(polygon, [x, y]) {
 function findCountryAtPoint(geojson, point) {
   for (const feature of geojson.features) {
     const geom = feature.geometry;
-
     if (geom.type === "Polygon") {
-      if (pointInPolygon(geom.coordinates, [point.lng, point.lat])) {
-        return feature;
-      }
+      if (pointInPolygon(geom.coordinates, [point.lng, point.lat])) return feature;
     } else if (geom.type === "MultiPolygon") {
       for (const poly of geom.coordinates) {
-        if (pointInPolygon(poly, [point.lng, point.lat])) {
-          return feature;
-        }
+        if (pointInPolygon(poly, [point.lng, point.lat])) return feature;
       }
     }
   }
-
   return null;
 }
 
@@ -187,5 +164,3 @@ function updateTotalClickedCount() {
   const totalEl = document.getElementById("totalClicked");
   if (totalEl) totalEl.textContent = clickedCountries.length;
 }
-
-
