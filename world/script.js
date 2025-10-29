@@ -55,7 +55,7 @@ continents.forEach(cont => {
 });
 
 // ===============================
-// Map setup and data loading
+// Load Map + Data
 // ===============================
 map.on("load", async () => {
   // Load GeoJSON once
@@ -67,7 +67,7 @@ map.on("load", async () => {
     return;
   }
 
-  // Add world countries source (for fast spatial querying)
+  // Add sources and layers
   map.addSource("world-countries", {
     type: "geojson",
     data: worldData,
@@ -82,7 +82,6 @@ map.on("load", async () => {
     },
   });
 
-  // Add selected countries overlay layers
   map.addSource("selected-countries", {
     type: "geojson",
     data: { type: "FeatureCollection", features: [] },
@@ -101,6 +100,21 @@ map.on("load", async () => {
     source: "selected-countries",
     paint: { "line-color": "#cc5200", "line-width": 2 },
   });
+
+  // ===============================
+  // Restore from localStorage
+  // ===============================
+  restoreSavedProgress();
+
+  // Render map + charts with saved data
+  if (clickedCountries.length > 0) {
+    map.getSource("selected-countries").setData({
+      type: "FeatureCollection",
+      features: clickedCountries,
+    });
+    Object.keys(clickedCountriesByContinent).forEach(updateContinentChart);
+    updateTotalClickedCount();
+  }
 
   // ===============================
   // Handle map clicks
@@ -133,7 +147,7 @@ map.on("load", async () => {
       }
     }
 
-    // Update visuals and charts
+    // Update visuals
     if (continent && continentCharts[continent]) updateContinentChart(continent);
     updateTotalClickedCount();
 
@@ -142,6 +156,9 @@ map.on("load", async () => {
       type: "FeatureCollection",
       features: clickedCountries,
     });
+
+    // 💾 Save to localStorage
+    saveProgress();
   });
 
   // ===============================
@@ -152,6 +169,55 @@ map.on("load", async () => {
     map.getCanvas().style.cursor = features.length ? "pointer" : "";
   });
 });
+
+// ===============================
+// LocalStorage Helpers
+// ===============================
+function saveProgress() {
+  // Save clicked countries (store only minimal props + geometry)
+  const data = clickedCountries.map(f => ({
+    properties: f.properties,
+    geometry: f.geometry,
+  }));
+
+  // Save continent progress as arrays
+  const continentsData = {};
+  for (const cont in clickedCountriesByContinent) {
+    continentsData[cont] = Array.from(clickedCountriesByContinent[cont]);
+  }
+
+  localStorage.setItem("clickedCountries", JSON.stringify(data));
+  localStorage.setItem("continentProgress", JSON.stringify(continentsData));
+}
+
+function restoreSavedProgress() {
+  const savedCountries = localStorage.getItem("clickedCountries");
+  const savedContinents = localStorage.getItem("continentProgress");
+
+  if (savedCountries) {
+    try {
+      const parsed = JSON.parse(savedCountries);
+      clickedCountries = parsed.map(f => ({
+        type: "Feature",
+        properties: f.properties,
+        geometry: f.geometry,
+      }));
+    } catch (e) {
+      console.warn("Failed to parse saved countries:", e);
+    }
+  }
+
+  if (savedContinents) {
+    try {
+      const parsed = JSON.parse(savedContinents);
+      for (const cont in parsed) {
+        clickedCountriesByContinent[cont] = new Set(parsed[cont]);
+      }
+    } catch (e) {
+      console.warn("Failed to parse continent progress:", e);
+    }
+  }
+}
 
 // ===============================
 // Chart + Counter Update Helpers
