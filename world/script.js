@@ -1,4 +1,7 @@
-// Initialize the map
+let worldData = null;
+let clickedEuropeCountries = new Set();
+
+// Initialize MapLibre
 const map = new maplibregl.Map({
   container: "map",
   style: "https://tiles.openfreemap.org/styles/positron",
@@ -6,78 +9,86 @@ const map = new maplibregl.Map({
   zoom: 2,
 });
 
-// Prepare a source for a single selected country (empty at start)
+// Chart.js setup
+const ctx = document.getElementById("europeChart").getContext("2d");
+const chartData = {
+  datasets: [
+    {
+      data: [0, 100], // filled vs remaining
+      backgroundColor: ["#0077ff", "#e0e0e0"],
+      borderWidth: 0,
+      cutout: "75%",
+    },
+  ],
+};
+const europeChart = new Chart(ctx, {
+  type: "doughnut",
+  data: chartData,
+  options: {
+    responsive: false,
+    rotation: -90,
+    circumference: 360,
+    plugins: { legend: { display: false }, tooltip: { enabled: false } },
+  },
+});
+
+// Add layers on load
 map.on("load", async () => {
   map.addSource("selected-country", {
     type: "geojson",
-    data: {
-      type: "FeatureCollection",
-      features: [],
-    },
+    data: { type: "FeatureCollection", features: [] },
   });
 
-  // Add layer to visualize selected polygon
   map.addLayer({
     id: "selected-country-fill",
     type: "fill",
     source: "selected-country",
-    paint: {
-      "fill-color": "#ff6600",
-      "fill-opacity": 0.5,
-    },
+    paint: { "fill-color": "#ff6600", "fill-opacity": 0.5 },
   });
 
   map.addLayer({
     id: "selected-country-outline",
     type: "line",
     source: "selected-country",
-    paint: {
-      "line-color": "#cc5200",
-      "line-width": 2,
-    },
+    paint: { "line-color": "#cc5200", "line-width": 2 },
   });
 
-  // Handle click events
-  map.on("click", async (e) => {
-    try {
-      const response = await fetch("world.geojson");
-      if (!response.ok) throw new Error("Failed to load GeoJSON");
-      const worldData = await response.json();
+  // Load GeoJSON once
+  try {
+    const response = await fetch("world.geojson");
+    worldData = await response.json();
+  } catch (err) {
+    console.error("Failed to load world.geojson:", err);
+    return;
+  }
 
-      // Check which country polygon contains the clicked point
-      const clickedCountry = findCountryAtPoint(worldData, e.lngLat);
+  // On map click
+  map.on("click", (e) => {
+    if (!worldData) return;
+    const clickedCountry = findCountryAtPoint(worldData, e.lngLat);
+    if (!clickedCountry) return;
 
-      if (clickedCountry) {
-        // Update the source with just this country's polygon
-        map.getSource("selected-country").setData({
-          type: "FeatureCollection",
-          features: [clickedCountry],
-        });
+    // Draw country
+    map.getSource("selected-country").setData({
+      type: "FeatureCollection",
+      features: [clickedCountry],
+    });
 
-        // Show popup with country name
-        const props = clickedCountry.properties;
-        const name = props.name || props.admin || "Unknown";
-        new maplibregl.Popup()
-          .setLngLat(e.lngLat)
-          .setHTML(`<strong>${name}</strong>`)
-          .addTo(map);
-      } else {
-        console.log("No country found at this location.");
-      }
-    } catch (err) {
-      console.error("Error loading or parsing GeoJSON:", err);
+    // Popup
+    const props = clickedCountry.properties;
+    const name = props.name || props.admin || "Unknown";
+    new maplibregl.Popup().setLngLat(e.lngLat).setHTML(`<strong>${name}</strong>`).addTo(map);
+
+    // Check if it's in Europe
+    if (props.continent === "Europe") {
+      clickedEuropeCountries.add(name);
+      updateEuropeChart();
     }
   });
 });
 
-/**
- * Helper function: find which country polygon contains a point
- * @param {Object} geojson - GeoJSON FeatureCollection
- * @param {Object} point - { lng, lat } object
- * @returns {Object|null} - The country feature that contains the point, or null
- */
+// Helper: Point-in-polygon check
 function findCountryAtPoint(geojson, point) {
-  // Simple point-in-polygon check using ray-casting
   function pointInPolygon(polygon, [x, y]) {
     let inside = false;
     const coords = polygon[0];
@@ -107,4 +118,20 @@ function findCountryAtPoint(geojson, point) {
     }
   }
   return null;
+}
+
+// Update the radial chart
+function updateEuropeChart() {
+  // Count total European countries in dataset
+  const totalEurope = worldData.features.filter(
+    (f) => f.properties.continent === "Europe"
+  ).length;
+
+  const clickedCount = clickedEuropeCountries.size;
+  const percent = Math.round((clickedCount / totalEurope) * 100);
+
+  chartData.datasets[0].data = [percent, 100 - percent];
+  europeChart.update();
+
+  document.getElementById("chart-label").innerText = `${percent}%`;
 }
