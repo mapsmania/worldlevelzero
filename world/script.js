@@ -258,26 +258,73 @@ function updateTotalClickedCount() {
 // ===============================
 // Share Image Functionality
 // ===============================
-
 async function generateShareableImage() {
   try {
-    const mapContainer = document.getElementById('map');
+    const mapCanvas = map.getCanvas();
     const button = document.getElementById('shareMapBtn');
     const originalText = button.innerHTML;
 
     // Show loading state
-    mapContainer.style.opacity = '0.7';
+    mapCanvas.style.opacity = '0.7';
     button.innerHTML = '⏳ Generating...';
     button.disabled = true;
 
-    // Use MapLibre's canvas directly
-    const canvas = map.getCanvas();
-    canvas.toBlob((blob) => {
+    // 1️⃣ Create an offscreen canvas to combine map + counters
+    const offscreen = document.createElement('canvas');
+    offscreen.width = mapCanvas.width;
+    offscreen.height = mapCanvas.height;
+    const ctx = offscreen.getContext('2d');
+
+    // 2️⃣ Draw the map
+    ctx.drawImage(mapCanvas, 0, 0);
+
+    // 3️⃣ Draw the top counters
+    const visitedCounter = document.getElementById('visited-counter');
+    const worldCounter = document.getElementById('world-counter');
+
+    [visitedCounter, worldCounter].forEach(el => {
+      if (!el) return;
+
+      const rect = el.getBoundingClientRect();
+
+      // Get computed styles
+      const style = getComputedStyle(el);
+      const bgColor = style.backgroundColor || 'white';
+      const color = style.color || 'black';
+      const font = style.font || '16px sans-serif';
+      const padding = parseFloat(style.padding || 8);
+
+      // Draw background rectangle
+      ctx.fillStyle = bgColor;
+      ctx.fillRect(
+        rect.left,
+        rect.top,
+        rect.width,
+        rect.height
+      );
+
+      // Draw the text inside the div
+      ctx.fillStyle = color;
+      ctx.font = font;
+      ctx.textBaseline = 'middle';
+
+      const span = el.querySelector('span');
+      const text = span ? span.textContent + el.textContent.replace(span.textContent, '') : el.textContent;
+
+      ctx.fillText(
+        text,
+        rect.left + padding,
+        rect.top + rect.height / 2
+      );
+    });
+
+    // 4️⃣ Convert combined canvas to blob
+    offscreen.toBlob(blob => {
       if (!blob) throw new Error("Failed to create image blob");
       const url = URL.createObjectURL(blob);
 
       // Reset UI
-      mapContainer.style.opacity = '1';
+      mapCanvas.style.opacity = '1';
       button.innerHTML = originalText;
       button.disabled = false;
 
@@ -288,9 +335,9 @@ async function generateShareableImage() {
   } catch (error) {
     console.error('Failed to generate image:', error);
 
-    const mapContainer = document.getElementById('map');
+    const mapCanvas = map.getCanvas();
     const button = document.getElementById('shareMapBtn');
-    mapContainer.style.opacity = '1';
+    mapCanvas.style.opacity = '1';
     if (button) {
       button.innerHTML = '📸 Share My Map';
       button.disabled = false;
@@ -298,6 +345,7 @@ async function generateShareableImage() {
     alert('Sorry, could not generate the image. Please try again.');
   }
 }
+
 
 function showShareDialog(imageUrl, blob) {
   // Remove existing dialog if any
