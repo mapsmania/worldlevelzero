@@ -99,3 +99,90 @@ html, body {
 .share-button:active {
   transform: translateY(0);
 }
+/* Share Dialog Styles */
+.share-dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10000;
+}
+
+.share-dialog-content {
+  background: white;
+  padding: 24px;
+  border-radius: 12px;
+  max-width: 500px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+.share-dialog-content h3 {
+  margin: 0 0 16px 0;
+  color: #333;
+}
+
+.image-preview {
+  margin: 20px 0;
+  border: 2px solid #eee;
+  border-radius: 8px;
+  overflow: hidden;
+  max-height: 300px;
+}
+
+.image-preview img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.share-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin: 20px 0;
+}
+
+.btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: bold;
+  transition: all 0.2s ease;
+}
+
+.btn-primary {
+  background: #0077ff;
+  color: white;
+}
+
+.btn-primary:hover {
+  background: #0055cc;
+  transform: translateY(-1px);
+}
+
+.btn-outline {
+  background: #6c757d;
+  color: white;
+}
+
+.btn-outline:hover {
+  background: #545b62;
+  transform: translateY(-1px);
+}
+
+.share-hint {
+  margin-top: 16px;
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 0;
+}
