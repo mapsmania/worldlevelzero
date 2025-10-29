@@ -16,20 +16,18 @@ html, body {
 
 #charts-wrapper {
   position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: auto; /* or max-width: 90% */
   min-height: 160px;
-  z-index: 10;
+  z-index: 20;
   display: flex;
-  flex-direction: row;
-  justify-content: center;
-  align-items: flex-start;
   gap: 24px;
-  padding: 16px 20px;
+  padding: 16px;
   overflow-x: auto;
-  overflow-y: hidden;
 }
+
 
 .chart-box {
   background: white;
