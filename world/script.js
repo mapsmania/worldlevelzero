@@ -1,5 +1,6 @@
 let worldData = null;
 let clickedEuropeCountries = new Set();
+let clickedCountries = []; // store all clicked country features
 
 // Initialize MapLibre
 const map = new maplibregl.Map({
@@ -14,7 +15,7 @@ const ctx = document.getElementById("europeChart").getContext("2d");
 const chartData = {
   datasets: [
     {
-      data: [0, 100], // filled vs remaining
+      data: [0, 100],
       backgroundColor: ["#0077ff", "#e0e0e0"],
       borderWidth: 0,
       cutout: "75%",
@@ -32,24 +33,24 @@ const europeChart = new Chart(ctx, {
   },
 });
 
-// Add layers on load
+// Add empty GeoJSON source on load
 map.on("load", async () => {
-  map.addSource("selected-country", {
+  map.addSource("selected-countries", {
     type: "geojson",
     data: { type: "FeatureCollection", features: [] },
   });
 
   map.addLayer({
-    id: "selected-country-fill",
+    id: "selected-countries-fill",
     type: "fill",
-    source: "selected-country",
+    source: "selected-countries",
     paint: { "fill-color": "#ff6600", "fill-opacity": 0.5 },
   });
 
   map.addLayer({
-    id: "selected-country-outline",
+    id: "selected-countries-outline",
     type: "line",
-    source: "selected-country",
+    source: "selected-countries",
     paint: { "line-color": "#cc5200", "line-width": 2 },
   });
 
@@ -68,21 +69,33 @@ map.on("load", async () => {
     const clickedCountry = findCountryAtPoint(worldData, e.lngLat);
     if (!clickedCountry) return;
 
-    // Draw country
-    map.getSource("selected-country").setData({
-      type: "FeatureCollection",
-      features: [clickedCountry],
-    });
-
-    // Popup
     const props = clickedCountry.properties;
     const name = props.name || props.admin || "Unknown";
-    new maplibregl.Popup().setLngLat(e.lngLat).setHTML(`<strong>${name}</strong>`).addTo(map);
 
-    // Check if it's in Europe
-    if (props.continent === "Europe") {
-      clickedEuropeCountries.add(name);
-      updateEuropeChart();
+    // Only add the country if not already clicked
+    const alreadyClicked = clickedCountries.some(
+      (f) => f.properties.iso_a3 === props.iso_a3
+    );
+    if (!alreadyClicked) {
+      clickedCountries.push(clickedCountry);
+
+      // Update GeoJSON source with all clicked countries
+      map.getSource("selected-countries").setData({
+        type: "FeatureCollection",
+        features: clickedCountries,
+      });
+
+      // Popup
+      new maplibregl.Popup()
+        .setLngLat(e.lngLat)
+        .setHTML(`<strong>${name}</strong>`)
+        .addTo(map);
+
+      // Update chart if it's a European country
+      if (props.continent === "Europe") {
+        clickedEuropeCountries.add(name);
+        updateEuropeChart();
+      }
     }
   });
 });
@@ -122,7 +135,6 @@ function findCountryAtPoint(geojson, point) {
 
 // Update the radial chart
 function updateEuropeChart() {
-  // Count total European countries in dataset
   const totalEurope = worldData.features.filter(
     (f) => f.properties.continent === "Europe"
   ).length;
