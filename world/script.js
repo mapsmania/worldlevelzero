@@ -300,15 +300,33 @@ async function generateShareableImage() {
     // Draw map
     ctx.drawImage(mapCanvas, 0, 0);
 
-    // 2️⃣ Draw top counters
+    // 2️⃣ Draw top counters, centered horizontally
     const countersContainer = document.querySelector('.absolute.top-4.left-1\\/2');
     if (countersContainer) {
-      const counterEls = countersContainer.querySelectorAll('div[id$="counter"]');
-      const gap = 16;
+      const counterEls = Array.from(countersContainer.querySelectorAll('div[id$="counter"]'));
+      const gap = 16; // horizontal gap between counters
 
-      let xOffset = 0; // start left for first counter
-      counterEls.forEach(el => {
-        if (!el) return;
+      // Measure all counter widths first
+      const widths = counterEls.map(el => {
+        const span = el.querySelector('span');
+        const text = span ? span.textContent + el.textContent.replace(span.textContent, '') : el.textContent;
+
+        const style = getComputedStyle(el);
+        const fontSize = parseFloat(style.fontSize) || 16;
+        const fontWeight = style.fontWeight || 'bold';
+        const fontFamily = style.fontFamily || 'sans-serif';
+        ctx.font = `${fontWeight} ${fontSize}px ${fontFamily}`;
+
+        const paddingH = parseFloat(style.paddingLeft) || 12;
+        const textWidth = ctx.measureText(text).width;
+        return textWidth + 2 * paddingH;
+      });
+
+      const totalWidth = widths.reduce((a, b) => a + b, 0) + gap * (counterEls.length - 1);
+      let xOffset = (canvas.width - totalWidth) / 2; // start x so counters are centered
+
+      // Draw each counter
+      counterEls.forEach((el, i) => {
         const rect = el.getBoundingClientRect();
         const style = getComputedStyle(el);
 
@@ -324,7 +342,6 @@ async function generateShareableImage() {
           ctx.shadowOffsetY = 2;
         }
 
-        // Text
         const span = el.querySelector('span');
         const text = span ? span.textContent + el.textContent.replace(span.textContent, '') : el.textContent;
 
@@ -333,15 +350,14 @@ async function generateShareableImage() {
         const fontFamily = style.fontFamily || 'sans-serif';
         ctx.font = `${fontWeight} ${fontSize}px ${fontFamily}`;
         ctx.textBaseline = 'middle';
+        ctx.fillStyle = style.color || '#000';
 
         const paddingH = parseFloat(style.paddingLeft) || 12;
         const paddingV = parseFloat(style.paddingTop) || 6;
-
-        const textWidth = ctx.measureText(text).width;
-        const boxWidth = textWidth + 2 * paddingH;
+        const boxWidth = widths[i];
         const boxHeight = rect.height;
 
-        // Draw rectangle background
+        // Draw background
         ctx.fillStyle = bgColor;
         roundRect(ctx, xOffset, 16, boxWidth, boxHeight, borderRadius, true, false);
 
@@ -349,8 +365,8 @@ async function generateShareableImage() {
         ctx.shadowColor = 'transparent';
         ctx.shadowBlur = 0;
 
-        // Draw text
-        ctx.fillStyle = style.color || '#000';
+        // Draw text centered vertically and with padding
+        ctx.fillStyle = style.color || '#333';
         ctx.fillText(text, xOffset + paddingH, 16 + boxHeight / 2);
 
         xOffset += boxWidth + gap;
