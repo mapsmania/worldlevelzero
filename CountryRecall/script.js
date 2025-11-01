@@ -126,9 +126,7 @@ map.on("load", async () => {
   // ===============================
 // Input-based country guess
 // ===============================
-// ===============================
-// Input-based country guess (handles iso_a3 = "-99")
-// ===============================
+  
 const countryInput = document.getElementById("text_a");
 
 countryInput.addEventListener("keydown", (evt) => {
