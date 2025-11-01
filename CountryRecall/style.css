@@ -218,3 +218,14 @@ input {
     #text_a {
       text-transform: uppercase;
     }
+
+.overlay {
+      height: 100px;
+      width: 250px;
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translate(-50%, 0);
+      z-index: 1;
+    }
+
