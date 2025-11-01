@@ -156,9 +156,16 @@ map.on("load", async () => {
 
     // Find the matching country in worldData (case-insensitive)
     const feature = worldData.features.find((f) => {
-      const name = (f.properties.name || f.properties.admin || "").trim().toLowerCase();
-      return name === guess;
-    });
+  const names = [
+    f.properties.name,
+    f.properties.admin,
+    f.properties.name_en,
+    f.properties.name_de
+  ].filter(Boolean).map(n => n.trim().toLowerCase());
+  
+  return names.includes(guess);
+});
+
 
     if (!feature) {
       // Wrong guess feedback
