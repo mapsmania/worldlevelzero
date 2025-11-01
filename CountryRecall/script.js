@@ -42,7 +42,7 @@ continents.forEach((cont) => {
       datasets: [
         {
           data: [0, 100],
-          backgroundColor: ["#ff6600", "#e0e0e0"],
+          backgroundColor: ["#ff6600", "#e0e0e0"], // completed = orange
           borderWidth: 0,
           cutout: "75%",
         },
@@ -80,9 +80,7 @@ map.on("load", async () => {
     id: "world-countries-fill",
     type: "fill",
     source: "world-countries",
-    paint: {
-      "fill-opacity": 0, // invisible but queryable
-    },
+    paint: { "fill-opacity": 0 },
   });
 
   map.addSource("selected-countries", {
@@ -156,16 +154,14 @@ map.on("load", async () => {
 
     // Find the matching country in worldData (case-insensitive)
     const feature = worldData.features.find((f) => {
-  const names = [
-    f.properties.name,
-    f.properties.admin,
-    f.properties.name_en,
-    f.properties.name_de
-  ].filter(Boolean).map(n => n.trim().toLowerCase());
-  
-  return names.includes(guess);
-});
-
+      const names = [
+        f.properties.name,
+        f.properties.admin,
+        f.properties.name_en,
+        f.properties.name_de
+      ].filter(Boolean).map(n => n.trim().toLowerCase());
+      return names.includes(guess);
+    });
 
     if (!feature) {
       // Wrong guess feedback
@@ -177,7 +173,6 @@ map.on("load", async () => {
     const name = feature.properties.name || feature.properties.admin || "Unknown";
     const iso = feature.properties.iso_a3;
     const continent = feature.properties.continent;
-
     const id = !iso || iso === "-99" ? name : iso;
 
     // Skip if already guessed
@@ -229,15 +224,30 @@ map.on("load", async () => {
 }); // <-- map.on("load")
 
 // ===============================
+// Get label coordinates from hidden layer
+// ===============================
+function getLabelCoordinates(adminName) {
+  const features = map.querySourceFeatures("openmaptiles", { sourceLayer: "place" });
+  if (!features || !features.length) return null;
+
+  const feature = features.find(
+    (f) => f.properties.admin === adminName || f.properties.name === adminName
+  );
+
+  if (feature) return feature.geometry.coordinates;
+  return null;
+}
+
+// ===============================
 // Update Labels Function
 // ===============================
 function updateLabels() {
   const labelFeatures = clickedCountries.map((f) => {
-    const [minLng, minLat, maxLng, maxLat] = turf.bbox(f);
-    const center = [(minLng + maxLng) / 2, (minLat + maxLat) / 2];
+    const coords = getLabelCoordinates(f.properties.admin) ||
+                   turf.centroid(f).geometry.coordinates; // fallback
     return {
       type: "Feature",
-      geometry: { type: "Point", coordinates: center },
+      geometry: { type: "Point", coordinates: coords },
       properties: { name: f.properties.name || f.properties.admin || "Unknown" },
     };
   });
@@ -316,13 +326,11 @@ function updateTotalClickedCount() {
   const totalEl = document.getElementById("totalClicked");
   const totalCountries = worldData ? worldData.features.length : 195;
   const clickedCount = clickedCountries.length;
-  const remaining = totalCountries - clickedCount;
 
   if (totalEl) {
     totalEl.textContent = `${clickedCount} / ${totalCountries}`;
   }
 
-  // Optional: update worldPercent if you still have it
   const percentEl = document.getElementById("worldPercent");
   if (percentEl) {
     const percent = ((clickedCount / totalCountries) * 100).toFixed(1);
