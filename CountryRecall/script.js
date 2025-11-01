@@ -124,6 +124,66 @@ map.on("load", async () => {
   }
 
   // ===============================
+// Input-based country guess
+// ===============================
+const countryInput = document.getElementById("text_a");
+
+countryInput.addEventListener("keydown", (evt) => {
+  if (evt.key !== "Enter") return;
+  const guess = countryInput.value.trim().toLowerCase();
+  if (!guess) return;
+
+  // Find country in worldData by name (case-insensitive)
+  const feature = worldData.features.find(f => {
+    const name = (f.properties.name || f.properties.admin || "").trim().toLowerCase();
+    return name === guess;
+  });
+
+  if (!feature) {
+    // Optional: show temporary feedback for wrong guess
+    countryInput.style.borderColor = "red";
+    setTimeout(() => countryInput.style.borderColor = "", 1000);
+    return;
+  }
+
+  const name = feature.properties.name || feature.properties.admin;
+  const id = feature.properties.iso_a3 || name;
+  const continent = feature.properties.continent;
+
+  // Skip if already guessed
+  const alreadyGuessed = clickedCountries.some(f => (f.properties.iso_a3 || f.properties.name) === id);
+  if (alreadyGuessed) {
+    countryInput.value = ""; // clear input
+    return;
+  }
+
+  // Add to clickedCountries
+  clickedCountries.push(feature);
+  if (continent && clickedCountriesByContinent[continent]) {
+    clickedCountriesByContinent[continent].add(name);
+  }
+
+  // Update visuals
+  if (continent && continentCharts[continent]) updateContinentChart(continent);
+  updateTotalClickedCount();
+
+  // Update map layer
+  map.getSource("selected-countries").setData({
+    type: "FeatureCollection",
+    features: clickedCountries,
+  });
+
+  // Save progress
+  saveProgress();
+
+  // Clear input and give visual feedback
+  countryInput.value = "";
+  countryInput.style.borderColor = "green";
+  setTimeout(() => countryInput.style.borderColor = "", 1000);
+});
+
+
+  // ===============================
   // Handle map clicks
   // ===============================
   map.on("click", (e) => {
