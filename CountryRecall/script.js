@@ -19,7 +19,7 @@ const clickedCountriesByContinent = {
 // ===============================
 const map = new maplibregl.Map({
   container: "map",
-  style: "style.json",
+  style: "https://tiles.openfreemap.org/styles/liberty",
   center: [0, 20],
   zoom: 2,
   preserveDrawingBuffer: true, // important!
