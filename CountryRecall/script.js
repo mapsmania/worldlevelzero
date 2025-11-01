@@ -42,7 +42,7 @@ continents.forEach((cont) => {
       datasets: [
         {
           data: [0, 100],
-          backgroundColor: ["#0077ff", "#e0e0e0"],
+          backgroundColor: ["#ff6600", "#e0e0e0"],
           borderWidth: 0,
           cutout: "75%",
         },
@@ -94,7 +94,7 @@ map.on("load", async () => {
     id: "selected-countries-fill",
     type: "fill",
     source: "selected-countries",
-    paint: { "fill-color": "#0077ff", "fill-opacity": 0.5 },
+    paint: { "fill-color": "#ff6600", "fill-opacity": 0.5 },
   });
 
   map.addLayer({
