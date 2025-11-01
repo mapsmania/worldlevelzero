@@ -186,3 +186,35 @@ html, body {
   color: #666;
   margin-bottom: 0;
 }
+
+input {
+  box-sizing: border-box;
+  position: relative;
+  z-index: 40;
+  width: 100%;
+  border-radius: 9999px;
+  padding: 0.5rem 1rem;
+  font-size: 1.125rem;
+  font-weight: bold;
+  color: #18181b;
+  caret-color: currentColor;
+  height: 48px; /* Optional: enforce same height */
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+              0 4px 6px -4px rgba(0, 0, 0, 0.1);
+  outline: none;
+  transition: box-shadow 300ms;
+}
+
+    input:focus {
+      box-shadow: 0 0 0 2px #27272a,
+                  0 10px 15px -3px rgba(0, 0, 0, 0.1),
+                  0 4px 6px -4px rgba(0, 0, 0, 0.1);
+    }
+
+    input:focus::placeholder {
+      color: transparent;
+    }
+    
+    #text_a {
+      text-transform: uppercase;
+    }
