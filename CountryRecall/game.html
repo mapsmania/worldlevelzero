@@ -36,25 +36,26 @@
 
   <div id="map"></div>
 
- <div class="absolute top-4 left-1/2 -translate-x-1/2 flex gap-4 z-20">
-  <!-- Total Countries Visited -->
+ <!-- Top bar -->
+<div class="absolute top-4 left-0 w-full flex justify-between items-center px-4 z-20">
+
+  <!-- Left counter -->
   <div id="visited-counter"
        class="bg-white/90 backdrop-blur-md px-4 py-2 rounded-lg shadow-md text-gray-800 font-semibold">
     <span id="totalClicked">0</span> Countries Named
   </div>
 
-   <div class="overlay">
-      <input id="text_a" type="text" placeholder="TYPE A Country NAME" />
-  </div>  
-    <div class="score">
-        </div> 
+  <!-- Center overlay input -->
+  <div class="overlay relative">
+    <input id="text_a" type="text" placeholder="TYPE A COUNTRY NAME" />
+  </div>
 
-
-  <!-- World Traveled -->
+  <!-- Right counter -->
   <div id="world-counter"
        class="bg-white/90 backdrop-blur-md px-4 py-2 rounded-lg shadow-md text-gray-800 font-semibold">
     <span id="worldPercent">0%</span> World Named
   </div>
+
 </div>
 
   <!-- Charts panel -->
