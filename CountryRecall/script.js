@@ -126,46 +126,55 @@ map.on("load", async () => {
   // ===============================
 // Input-based country guess
 // ===============================
+// ===============================
+// Input-based country guess (handles iso_a3 = "-99")
+// ===============================
 const countryInput = document.getElementById("text_a");
 
 countryInput.addEventListener("keydown", (evt) => {
   if (evt.key !== "Enter") return;
+
   const guess = countryInput.value.trim().toLowerCase();
   if (!guess) return;
 
-  // Find country in worldData by name (case-insensitive)
+  // Find the matching country in worldData (case-insensitive)
   const feature = worldData.features.find(f => {
     const name = (f.properties.name || f.properties.admin || "").trim().toLowerCase();
     return name === guess;
   });
 
   if (!feature) {
-    // Optional: show temporary feedback for wrong guess
+    // Optional: visual feedback for wrong guess
     countryInput.style.borderColor = "red";
     setTimeout(() => countryInput.style.borderColor = "", 1000);
     return;
   }
 
-  const name = feature.properties.name || feature.properties.admin;
-  const id = feature.properties.iso_a3 || name;
+  const name = feature.properties.name || feature.properties.admin || "Unknown";
+  const iso = feature.properties.iso_a3;
   const continent = feature.properties.continent;
 
+  // Determine safe ID (fallback to name if iso_a3 is missing or "-99")
+  const id = (!iso || iso === "-99") ? name : iso;
+
   // Skip if already guessed
-  const alreadyGuessed = clickedCountries.some(f => (f.properties.iso_a3 || f.properties.name) === id);
+  const alreadyGuessed = clickedCountries.some(f => {
+    const fName = f.properties.name || f.properties.admin || "Unknown";
+    const fIso = f.properties.iso_a3;
+    const fId = (!fIso || fIso === "-99") ? fName : fIso;
+    return fId === id;
+  });
+
   if (alreadyGuessed) {
     countryInput.value = ""; // clear input
     return;
   }
 
-  // Add to clickedCountries
+  // ✅ Add country to clickedCountries
   clickedCountries.push(feature);
   if (continent && clickedCountriesByContinent[continent]) {
     clickedCountriesByContinent[continent].add(name);
   }
-
-  // Update visuals
-  if (continent && continentCharts[continent]) updateContinentChart(continent);
-  updateTotalClickedCount();
 
   // Update map layer
   map.getSource("selected-countries").setData({
@@ -173,10 +182,14 @@ countryInput.addEventListener("keydown", (evt) => {
     features: clickedCountries,
   });
 
+  // Update charts and counters
+  if (continent && continentCharts[continent]) updateContinentChart(continent);
+  updateTotalClickedCount();
+
   // Save progress
   saveProgress();
 
-  // Clear input and give visual feedback
+  // Clear input and provide positive visual feedback
   countryInput.value = "";
   countryInput.style.borderColor = "green";
   setTimeout(() => countryInput.style.borderColor = "", 1000);
