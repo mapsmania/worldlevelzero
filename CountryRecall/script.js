@@ -104,6 +104,29 @@ map.on("load", async () => {
     paint: { "line-color": "#cc5200", "line-width": 2 },
   });
 
+  // Add source & layer for country labels
+  map.addSource("selected-country-labels", {
+    type: "geojson",
+    data: { type: "FeatureCollection", features: [] },
+  });
+
+  map.addLayer({
+    id: "selected-country-labels",
+    type: "symbol",
+    source: "selected-country-labels",
+    layout: {
+      "text-field": ["get", "name"],
+      "text-font": ["Open Sans Bold", "Arial Unicode MS Bold"],
+      "text-size": 12,
+      "text-anchor": "center",
+    },
+    paint: {
+      "text-color": "#222",
+      "text-halo-color": "#fff",
+      "text-halo-width": 2,
+    },
+  });
+
   // ===============================
   // Restore from localStorage
   // ===============================
@@ -115,6 +138,7 @@ map.on("load", async () => {
       type: "FeatureCollection",
       features: clickedCountries,
     });
+    updateLabels();
     Object.keys(clickedCountriesByContinent).forEach(updateContinentChart);
     updateTotalClickedCount();
   }
@@ -137,7 +161,7 @@ map.on("load", async () => {
     });
 
     if (!feature) {
-      // Optional: visual feedback for wrong guess
+      // Wrong guess feedback
       countryInput.style.borderColor = "red";
       setTimeout(() => (countryInput.style.borderColor = ""), 1000);
       return;
@@ -147,7 +171,6 @@ map.on("load", async () => {
     const iso = feature.properties.iso_a3;
     const continent = feature.properties.continent;
 
-    // Determine safe ID (fallback to name if iso_a3 is missing or "-99")
     const id = !iso || iso === "-99" ? name : iso;
 
     // Skip if already guessed
@@ -159,30 +182,31 @@ map.on("load", async () => {
     });
 
     if (alreadyGuessed) {
-      countryInput.value = ""; // clear input
+      countryInput.value = "";
       return;
     }
 
-    // ✅ Add country to clickedCountries
+    // ✅ Add country
     clickedCountries.push(feature);
     if (continent && clickedCountriesByContinent[continent]) {
       clickedCountriesByContinent[continent].add(name);
     }
 
-    // Update map layer
+    // Update map layers
     map.getSource("selected-countries").setData({
       type: "FeatureCollection",
       features: clickedCountries,
     });
+    updateLabels();
 
-    // Update charts and counters
+    // Update charts & counters
     if (continent && continentCharts[continent]) updateContinentChart(continent);
     updateTotalClickedCount();
 
     // Save progress
     saveProgress();
 
-    // Clear input and provide positive visual feedback
+    // Positive feedback
     countryInput.value = "";
     countryInput.style.borderColor = "green";
     setTimeout(() => (countryInput.style.borderColor = ""), 1000);
@@ -195,7 +219,27 @@ map.on("load", async () => {
     const features = map.queryRenderedFeatures(e.point, { layers: ["world-countries-fill"] });
     map.getCanvas().style.cursor = features.length ? "pointer" : "";
   });
-}); // <-- CLOSES map.on("load")
+}); // <-- map.on("load")
+
+// ===============================
+// Update Labels Function
+// ===============================
+function updateLabels() {
+  const labelFeatures = clickedCountries.map((f) => {
+    const [minLng, minLat, maxLng, maxLat] = turf.bbox(f);
+    const center = [(minLng + maxLng) / 2, (minLat + maxLat) / 2];
+    return {
+      type: "Feature",
+      geometry: { type: "Point", coordinates: center },
+      properties: { name: f.properties.name || f.properties.admin || "Unknown" },
+    };
+  });
+
+  map.getSource("selected-country-labels").setData({
+    type: "FeatureCollection",
+    features: labelFeatures,
+  });
+}
 
 // ===============================
 // LocalStorage Helpers
