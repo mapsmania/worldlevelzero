@@ -94,7 +94,7 @@ map.on("load", async () => {
     id: "selected-countries-fill",
     type: "fill",
     source: "selected-countries",
-    paint: { "fill-color": "#ff6600", "fill-opacity": 0.5 },
+    paint: { "fill-color": "#0077ff", "fill-opacity": 0.5 },
   });
 
   map.addLayer({
