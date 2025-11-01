@@ -215,9 +215,14 @@ input {
       color: transparent;
     }
     
-    #text_a {
-      text-transform: uppercase;
-    }
+   #text_a {
+  text-transform: uppercase;
+  padding-left: 2.25rem;  /* Increased horizontal space */
+  padding-right: 2.25rem;
+  text-align: center;     /* Centers placeholder and input text */
+  width: 100%;
+}
+
 
 .overlay {
   flex: 0 0 300px; /* Fixed width prevents flex recalculation */
