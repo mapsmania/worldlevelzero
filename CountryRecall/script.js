@@ -22,7 +22,7 @@ const map = new maplibregl.Map({
   style: "style.json",
   center: [0, 20],
   zoom: 2,
-  preserveDrawingBuffer: true  // important!
+  preserveDrawingBuffer: true, // important!
 });
 
 // ===============================
@@ -31,7 +31,7 @@ const map = new maplibregl.Map({
 const continents = ["Europe", "Asia", "Africa", "North America", "South America", "Oceania"];
 const continentCharts = {};
 
-continents.forEach(cont => {
+continents.forEach((cont) => {
   const canvas = document.getElementById(`${cont.replace(" ", "")}Chart`);
   if (!canvas) return;
 
@@ -39,12 +39,14 @@ continents.forEach(cont => {
   continentCharts[cont] = new Chart(ctx, {
     type: "doughnut",
     data: {
-      datasets: [{
-        data: [0, 100],
-        backgroundColor: ["#0077ff", "#e0e0e0"],
-        borderWidth: 0,
-        cutout: "75%",
-      }],
+      datasets: [
+        {
+          data: [0, 100],
+          backgroundColor: ["#0077ff", "#e0e0e0"],
+          borderWidth: 0,
+          cutout: "75%",
+        },
+      ],
     },
     options: {
       responsive: false,
@@ -59,12 +61,6 @@ continents.forEach(cont => {
 // Load Map + Data
 // ===============================
 map.on("load", async () => {
-  // screencapture button event
-  const shareButton = document.getElementById('shareMapBtn');
-  if (shareButton) {
-  shareButton.addEventListener('click', generateShareableImage);
-  }
-
   // Load GeoJSON once
   try {
     const response = await fetch("world.geojson");
@@ -124,86 +120,92 @@ map.on("load", async () => {
   }
 
   // ===============================
-// Input-based country guess
-// ===============================
-  
-const countryInput = document.getElementById("text_a");
+  // Input-based country guess
+  // ===============================
+  const countryInput = document.getElementById("text_a");
 
-countryInput.addEventListener("keydown", (evt) => {
-  if (evt.key !== "Enter") return;
+  countryInput.addEventListener("keydown", (evt) => {
+    if (evt.key !== "Enter") return;
 
-  const guess = countryInput.value.trim().toLowerCase();
-  if (!guess) return;
+    const guess = countryInput.value.trim().toLowerCase();
+    if (!guess) return;
 
-  // Find the matching country in worldData (case-insensitive)
-  const feature = worldData.features.find(f => {
-    const name = (f.properties.name || f.properties.admin || "").trim().toLowerCase();
-    return name === guess;
+    // Find the matching country in worldData (case-insensitive)
+    const feature = worldData.features.find((f) => {
+      const name = (f.properties.name || f.properties.admin || "").trim().toLowerCase();
+      return name === guess;
+    });
+
+    if (!feature) {
+      // Optional: visual feedback for wrong guess
+      countryInput.style.borderColor = "red";
+      setTimeout(() => (countryInput.style.borderColor = ""), 1000);
+      return;
+    }
+
+    const name = feature.properties.name || feature.properties.admin || "Unknown";
+    const iso = feature.properties.iso_a3;
+    const continent = feature.properties.continent;
+
+    // Determine safe ID (fallback to name if iso_a3 is missing or "-99")
+    const id = !iso || iso === "-99" ? name : iso;
+
+    // Skip if already guessed
+    const alreadyGuessed = clickedCountries.some((f) => {
+      const fName = f.properties.name || f.properties.admin || "Unknown";
+      const fIso = f.properties.iso_a3;
+      const fId = !fIso || fIso === "-99" ? fName : fIso;
+      return fId === id;
+    });
+
+    if (alreadyGuessed) {
+      countryInput.value = ""; // clear input
+      return;
+    }
+
+    // ✅ Add country to clickedCountries
+    clickedCountries.push(feature);
+    if (continent && clickedCountriesByContinent[continent]) {
+      clickedCountriesByContinent[continent].add(name);
+    }
+
+    // Update map layer
+    map.getSource("selected-countries").setData({
+      type: "FeatureCollection",
+      features: clickedCountries,
+    });
+
+    // Update charts and counters
+    if (continent && continentCharts[continent]) updateContinentChart(continent);
+    updateTotalClickedCount();
+
+    // Save progress
+    saveProgress();
+
+    // Clear input and provide positive visual feedback
+    countryInput.value = "";
+    countryInput.style.borderColor = "green";
+    setTimeout(() => (countryInput.style.borderColor = ""), 1000);
   });
 
-  if (!feature) {
-    // Optional: visual feedback for wrong guess
-    countryInput.style.borderColor = "red";
-    setTimeout(() => countryInput.style.borderColor = "", 1000);
-    return;
-  }
-
-  const name = feature.properties.name || feature.properties.admin || "Unknown";
-  const iso = feature.properties.iso_a3;
-  const continent = feature.properties.continent;
-
-  // Determine safe ID (fallback to name if iso_a3 is missing or "-99")
-  const id = (!iso || iso === "-99") ? name : iso;
-
-  // Skip if already guessed
-  const alreadyGuessed = clickedCountries.some(f => {
-    const fName = f.properties.name || f.properties.admin || "Unknown";
-    const fIso = f.properties.iso_a3;
-    const fId = (!fIso || fIso === "-99") ? fName : fIso;
-    return fId === id;
+  // ===============================
+  // Hover pointer
+  // ===============================
+  map.on("mousemove", (e) => {
+    const features = map.queryRenderedFeatures(e.point, { layers: ["world-countries-fill"] });
+    map.getCanvas().style.cursor = features.length ? "pointer" : "";
   });
-
-  if (alreadyGuessed) {
-    countryInput.value = ""; // clear input
-    return;
-  }
-
-  // ✅ Add country to clickedCountries
-  clickedCountries.push(feature);
-  if (continent && clickedCountriesByContinent[continent]) {
-    clickedCountriesByContinent[continent].add(name);
-  }
-
-  // Update map layer
-  map.getSource("selected-countries").setData({
-    type: "FeatureCollection",
-    features: clickedCountries,
-  });
-
-  // Update charts and counters
-  if (continent && continentCharts[continent]) updateContinentChart(continent);
-  updateTotalClickedCount();
-
-  // Save progress
-  saveProgress();
-
-  // Clear input and provide positive visual feedback
-  countryInput.value = "";
-  countryInput.style.borderColor = "green";
-  setTimeout(() => countryInput.style.borderColor = "", 1000);
-});
+}); // <-- CLOSES map.on("load")
 
 // ===============================
 // LocalStorage Helpers
 // ===============================
 function saveProgress() {
-  // Save clicked countries (store only minimal props + geometry)
-  const data = clickedCountries.map(f => ({
+  const data = clickedCountries.map((f) => ({
     properties: f.properties,
     geometry: f.geometry,
   }));
 
-  // Save continent progress as arrays
   const continentsData = {};
   for (const cont in clickedCountriesByContinent) {
     continentsData[cont] = Array.from(clickedCountriesByContinent[cont]);
@@ -220,7 +222,7 @@ function restoreSavedProgress() {
   if (savedCountries) {
     try {
       const parsed = JSON.parse(savedCountries);
-      clickedCountries = parsed.map(f => ({
+      clickedCountries = parsed.map((f) => ({
         type: "Feature",
         properties: f.properties,
         geometry: f.geometry,
@@ -246,7 +248,8 @@ function restoreSavedProgress() {
 // Chart + Counter Update Helpers
 // ===============================
 function updateContinentChart(continent) {
-  const total = worldData.features.filter(f => f.properties.continent === continent).length || 1;
+  const total =
+    worldData.features.filter((f) => f.properties.continent === continent).length || 1;
   const clickedCount = clickedCountriesByContinent[continent].size;
   const percent = Math.round((clickedCount / total) * 100);
 
@@ -269,4 +272,3 @@ function updateTotalClickedCount() {
     percentEl.textContent = `${percent}%`;
   }
 }
-
