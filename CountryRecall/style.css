@@ -220,11 +220,12 @@ input {
     }
 
 .overlay {
-  flex: 0 0 auto;
+  flex: 0 0 300px; /* Fixed width prevents flex recalculation */
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 20;
 }
+
 
 
