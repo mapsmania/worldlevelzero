@@ -319,7 +319,7 @@ function updateTotalClickedCount() {
   const remaining = totalCountries - clickedCount;
 
   if (totalEl) {
-    totalEl.textContent = `${clickedCount}/${totalCountries}`;
+    totalEl.textContent = `${clickedCount} / ${totalCountries}`;
   }
 
   // Optional: update worldPercent if you still have it
