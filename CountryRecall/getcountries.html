@@ -3,18 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Country Names from GeoJSON</title>
+    <title>Formatted Country List from GeoJSON</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             margin: 20px;
         }
+        #formatted-list-container {
+            margin-top: 30px;
+            padding: 15px;
+            border: 1px solid #0056b3;
+            background-color: #e6f0ff;
+            border-radius: 5px;
+        }
+        #formatted-list {
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap; /* Allows the text to wrap */
+            word-wrap: break-word;
+            padding: 10px;
+            background-color: #fff;
+            border: 1px dashed #ccc;
+            cursor: pointer; /* Indicates it's clickable */
+        }
         #country-list {
-            column-count: 3; /* Display the list in 3 columns for better readability */
+            column-count: 3;
             list-style-type: disc;
             padding-left: 20px;
         }
-        h1 {
+        h1, h2 {
             border-bottom: 2px solid #ccc;
             padding-bottom: 10px;
         }
@@ -27,57 +43,81 @@
         <li>Loading...</li>
     </ul>
 
+    <div id="formatted-list-container">
+        <h2>🐍 Python List Format (Click to Copy)</h2>
+        <pre id="formatted-list">Loading and formatting data...</pre>
+    </div>
+
     <script>
         /**
-         * Function to fetch the GeoJSON file and extract country names.
+         * Function to fetch the GeoJSON file, extract names, and format them.
          */
         async function getCountryNames() {
             const geojsonFile = 'world.geojson';
-            const nameKey = 'name'; // The specified property key
+            const nameKey = 'name';
+            
+            const ul = document.getElementById('country-list');
+            const pre = document.getElementById('formatted-list');
 
             try {
-                // 1. Fetch the file
                 const response = await fetch(geojsonFile);
 
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
 
-                // 2. Parse the JSON content
                 const geojsonData = await response.json();
                 
-                // 3. Get the list (ul element)
-                const ul = document.getElementById('country-list');
-                ul.innerHTML = ''; // Clear the "Loading..." message
+                ul.innerHTML = '';
+                let countryNames = [];
 
-                // 4. Check if the GeoJSON is a FeatureCollection
                 if (geojsonData.type === 'FeatureCollection' && Array.isArray(geojsonData.features)) {
                     
-                    // 5. Iterate through features and extract the name
                     geojsonData.features.forEach(feature => {
-                        // Check that the feature has properties and the name key exists
                         if (feature.properties && feature.properties[nameKey]) {
                             const countryName = feature.properties[nameKey];
                             
-                            // Create a new list item (li) and add it to the ul
+                            // 1. Collect name for the formatted list
+                            countryNames.push(countryName);
+                            
+                            // 2. Add to the standard list display
                             const li = document.createElement('li');
                             li.textContent = countryName;
                             ul.appendChild(li);
                         }
                     });
 
+                    // 3. Format the list for Python: "name1", "name2", ...
+                    const formattedString = countryNames
+                        .map(name => `"${name}"`) // Wrap each name in double quotes
+                        .join(',\n    '); // Join with a comma and new line for readability
+                    
+                    // Add brackets for a complete Python list syntax
+                    pre.textContent = `[\n    ${formattedString}\n]`;
+
+                    // Add a click-to-copy functionality
+                    pre.onclick = () => {
+                        navigator.clipboard.writeText(pre.textContent.trim())
+                            .then(() => {
+                                alert('Python list copied to clipboard!');
+                            })
+                            .catch(err => {
+                                console.error('Could not copy text: ', err);
+                            });
+                    };
+
                 } else {
                     ul.innerHTML = '<li>Error: GeoJSON file is not a valid FeatureCollection.</li>';
+                    pre.textContent = 'Error processing file.';
                 }
 
             } catch (error) {
-                const ul = document.getElementById('country-list');
                 ul.innerHTML = `<li>Error loading or parsing file: ${error.message}</li>`;
+                pre.textContent = `Error: ${error.message}`;
                 console.error('Fetch error:', error);
             }
         }
 
-        // Call the function when the page loads
         getCountryNames();
     </script>
 </body>
