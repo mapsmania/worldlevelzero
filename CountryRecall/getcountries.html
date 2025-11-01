@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Country Names from GeoJSON</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        #country-list {
+            column-count: 3; /* Display the list in 3 columns for better readability */
+            list-style-type: disc;
+            padding-left: 20px;
+        }
+        h1 {
+            border-bottom: 2px solid #ccc;
+            padding-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>🌍 List of Countries</h1>
+    <ul id="country-list">
+        <li>Loading...</li>
+    </ul>
+
+    <script>
+        /**
+         * Function to fetch the GeoJSON file and extract country names.
+         */
+        async function getCountryNames() {
+            const geojsonFile = 'world.geojson';
+            const nameKey = 'name'; // The specified property key
+
+            try {
+                // 1. Fetch the file
+                const response = await fetch(geojsonFile);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                // 2. Parse the JSON content
+                const geojsonData = await response.json();
+                
+                // 3. Get the list (ul element)
+                const ul = document.getElementById('country-list');
+                ul.innerHTML = ''; // Clear the "Loading..." message
+
+                // 4. Check if the GeoJSON is a FeatureCollection
+                if (geojsonData.type === 'FeatureCollection' && Array.isArray(geojsonData.features)) {
+                    
+                    // 5. Iterate through features and extract the name
+                    geojsonData.features.forEach(feature => {
+                        // Check that the feature has properties and the name key exists
+                        if (feature.properties && feature.properties[nameKey]) {
+                            const countryName = feature.properties[nameKey];
+                            
+                            // Create a new list item (li) and add it to the ul
+                            const li = document.createElement('li');
+                            li.textContent = countryName;
+                            ul.appendChild(li);
+                        }
+                    });
+
+                } else {
+                    ul.innerHTML = '<li>Error: GeoJSON file is not a valid FeatureCollection.</li>';
+                }
+
+            } catch (error) {
+                const ul = document.getElementById('country-list');
+                ul.innerHTML = `<li>Error loading or parsing file: ${error.message}</li>`;
+                console.error('Fetch error:', error);
+            }
+        }
+
+        // Call the function when the page loads
+        getCountryNames();
+    </script>
+</body>
+</html>
