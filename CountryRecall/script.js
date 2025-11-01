@@ -129,46 +129,86 @@ map.on("load", async () => {
   // Handle map clicks
   // ===============================
   map.on("click", (e) => {
-    const features = map.queryRenderedFeatures(e.point, { layers: ["world-countries-fill"] });
-    if (!features.length) return;
+  const features = map.queryRenderedFeatures(e.point, { layers: ["world-countries-fill"] });
+  if (!features.length) return;
 
-    const clickedCountry = features[0];
-    const props = clickedCountry.properties;
-    const name = props.name || props.admin || "Unknown";
-    const id = props.iso_a3 || name;
-    const continent = props.continent;
+  const clickedCountry = features[0];
+  const props = clickedCountry.properties;
+  const name = props.name || props.admin || "Unknown";
+  const id = props.iso_a3 || name;
+  const continent = props.continent;
 
-    const existingIndex = clickedCountries.findIndex(
-      (f) => (f.properties.iso_a3 || f.properties.name) === id
-    );
+  // Skip if already guessed correctly
+  const alreadyGuessed = clickedCountries.some(
+    (f) => (f.properties.iso_a3 || f.properties.name) === id
+  );
+  if (alreadyGuessed) return;
 
-    if (existingIndex >= 0) {
-      // ✅ Country already selected → remove it
-      clickedCountries.splice(existingIndex, 1);
-      if (continent && clickedCountriesByContinent[continent]) {
-        clickedCountriesByContinent[continent].delete(name);
-      }
-    } else {
-      // ✅ Add new selection
+  // Create popup container
+  const popupDiv = document.createElement("div");
+  popupDiv.innerHTML = `
+    <div style="display:flex; flex-direction:column; gap:6px; font-family:sans-serif; width:180px;">
+      <label style="font-size:14px; font-weight:bold;">Guess this country:</label>
+      <input id="countryGuessInput" type="text" placeholder="Type name..." 
+             style="padding:4px; border:1px solid #ccc; border-radius:4px; width:100%;">
+      <button id="submitGuessBtn" style="padding:4px 6px; background:#0077ff; color:white; border:none; border-radius:4px; cursor:pointer;">Submit</button>
+      <div id="guessFeedback" style="font-size:13px; color:red; display:none;"></div>
+    </div>
+  `;
+
+  const popup = new maplibregl.Popup({ closeOnClick: true })
+    .setLngLat(e.lngLat)
+    .setDOMContent(popupDiv)
+    .addTo(map);
+
+  const input = popupDiv.querySelector("#countryGuessInput");
+  const button = popupDiv.querySelector("#submitGuessBtn");
+  const feedback = popupDiv.querySelector("#guessFeedback");
+
+  // Focus input when popup opens
+  setTimeout(() => input.focus(), 100);
+
+  button.addEventListener("click", () => {
+    const guess = input.value.trim().toLowerCase();
+    const correct = name.trim().toLowerCase();
+
+    if (guess === correct) {
+      // ✅ Correct answer!
       clickedCountries.push(clickedCountry);
       if (continent && clickedCountriesByContinent[continent]) {
         clickedCountriesByContinent[continent].add(name);
       }
+
+      // Update visuals
+      if (continent && continentCharts[continent]) updateContinentChart(continent);
+      updateTotalClickedCount();
+
+      map.getSource("selected-countries").setData({
+        type: "FeatureCollection",
+        features: clickedCountries,
+      });
+
+      saveProgress();
+
+      feedback.style.color = "green";
+      feedback.textContent = "✅ Correct!";
+      feedback.style.display = "block";
+
+      // Auto-close popup after 1s
+      setTimeout(() => popup.remove(), 1000);
+    } else {
+      // ❌ Wrong guess
+      feedback.style.display = "block";
+      feedback.textContent = "❌ Try again!";
+      feedback.style.color = "red";
     }
-
-    // Update visuals
-    if (continent && continentCharts[continent]) updateContinentChart(continent);
-    updateTotalClickedCount();
-
-    // Update map overlay
-    map.getSource("selected-countries").setData({
-      type: "FeatureCollection",
-      features: clickedCountries,
-    });
-
-    // 💾 Save to localStorage
-    saveProgress();
   });
+
+  // Allow pressing Enter
+  input.addEventListener("keydown", (evt) => {
+    if (evt.key === "Enter") button.click();
+  });
+});
 
   // ===============================
   // Hover pointer
