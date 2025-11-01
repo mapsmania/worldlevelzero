@@ -1,124 +1,84 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Formatted Country List from GeoJSON</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-        }
-        #formatted-list-container {
-            margin-top: 30px;
-            padding: 15px;
-            border: 1px solid #0056b3;
-            background-color: #e6f0ff;
-            border-radius: 5px;
-        }
-        #formatted-list {
-            font-family: 'Courier New', monospace;
-            white-space: pre-wrap; /* Allows the text to wrap */
-            word-wrap: break-word;
-            padding: 10px;
-            background-color: #fff;
-            border: 1px dashed #ccc;
-            cursor: pointer; /* Indicates it's clickable */
-        }
-        #country-list {
-            column-count: 3;
-            list-style-type: disc;
-            padding-left: 20px;
-        }
-        h1, h2 {
-            border-bottom: 2px solid #ccc;
-            padding-bottom: 10px;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <title>Generate Country Label GeoJSON</title>
+  <style>
+    body { font-family: sans-serif; margin: 20px; }
+    pre { background: #f4f4f4; padding: 10px; border-radius: 6px; overflow: auto; max-height: 500px; }
+  </style>
 </head>
 <body>
+  <h1>Generate Country Label GeoJSON</h1>
+  <p>Open the console (F12) to see the generated GeoJSON or copy from the textarea below.</p>
+  <textarea id="output" cols="100" rows="20"></textarea>
 
-    <h1>🌍 List of Countries</h1>
-    <ul id="country-list">
-        <li>Loading...</li>
-    </ul>
+  <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
+  <script>
+    // 1. Your list of countries
+    const countryNames = [
+      "Costa Rica","Nicaragua","Haiti","Dominican Rep.","El Salvador","Guatemala","Cuba",
+      "Honduras","United States of America","Canada","Mexico","Belize","Panama","Greenland",
+      "Bahamas","Trinidad and Tobago","Puerto Rico","Jamaica","Indonesia","Malaysia","Cyprus",
+      "India","China","Israel","Palestine","Lebanon","Syria","South Korea","North Korea",
+      "Bhutan","Oman","Uzbekistan","Kazakhstan","Tajikistan","Mongolia","Vietnam","Cambodia",
+      "United Arab Emirates","Georgia","Azerbaijan","Turkey","Laos","Kyrgyzstan","Armenia",
+      "Iraq","Iran","Qatar","Saudi Arabia","Pakistan","Thailand","Kuwait","Timor-Leste",
+      "Brunei","Myanmar","Bangladesh","Afghanistan","Turkmenistan","Jordan","Nepal","Yemen",
+      "N. Cyprus","Philippines","Sri Lanka","Taiwan","Japan","Chile","Bolivia","Peru","Argentina",
+      "Suriname","Guyana","Brazil","Uruguay","Ecuador","Colombia","Paraguay","Venezuela",
+      "Falkland Is.","Ethiopia","S. Sudan","Somalia","Kenya","Malawi","Tanzania","Somaliland",
+      "Morocco","W. Sahara","Congo","Dem. Rep. Congo","Namibia","South Africa","Libya",
+      "Tunisia","Zambia","Sierra Leone","Guinea","Liberia","Central African Rep.","Sudan",
+      "Djibouti","Eritrea","Côte d'Ivoire","Mali","Senegal","Nigeria","Benin","Angola",
+      "Botswana","Zimbabwe","Chad","Algeria","Mozambique","eSwatini","Burundi","Rwanda",
+      "Uganda","Lesotho","Cameroon","Gabon","Niger","Burkina Faso","Togo","Ghana",
+      "Guinea-Bissau","Egypt","Mauritania","Eq. Guinea","Gambia","Madagascar","France",
+      "Ukraine","Belarus","Lithuania","Russia","Czechia","Germany","Estonia","Latvia",
+      "Norway","Sweden","Finland","Luxembourg","Belgium","North Macedonia","Albania","Kosovo",
+      "Spain","Denmark","Romania","Hungary","Slovakia","Poland","Ireland","United Kingdom",
+      "Greece","Austria","Italy","Switzerland","Netherlands","Serbia","Croatia","Slovenia",
+      "Bulgaria","Montenegro","Bosnia and Herz.","Portugal","Moldova","Iceland","Papua New Guinea",
+      "Australia","Fiji","New Zealand","New Caledonia","Solomon Is.","Vanuatu","Antarctica",
+      "Fr. S. Antarctic Lands"
+    ];
 
-    <div id="formatted-list-container">
-        <h2>🐍 Python List Format (Click to Copy)</h2>
-        <pre id="formatted-list">Loading and formatting data...</pre>
-    </div>
+    // 2. Fetch centroids dataset
+    fetch("https://cdn.jsdelivr.net/gh/gavinr/world-countries-centroids@v1/dist/countries.geojson")
+      .then(res => res.json())
+      .then(data => {
+        // Build lookup map
+        const lookup = {};
+        data.features.forEach(f => {
+          const country = f.properties.COUNTRY.trim();
+          lookup[country] = f.geometry.coordinates;
+        });
 
-    <script>
-        /**
-         * Function to fetch the GeoJSON file, extract names, and format them.
-         */
-        async function getCountryNames() {
-            const geojsonFile = 'world.geojson';
-            const nameKey = 'name';
-            
-            const ul = document.getElementById('country-list');
-            const pre = document.getElementById('formatted-list');
+        // Build GeoJSON
+        const labelGeoJSON = {
+          type: "FeatureCollection",
+          features: []
+        };
 
-            try {
-                const response = await fetch(geojsonFile);
+        countryNames.forEach(name => {
+          const coords = lookup[name];
+          if (coords) {
+            labelGeoJSON.features.push({
+              type: "Feature",
+              geometry: { type: "Point", coordinates: coords },
+              properties: { name }
+            });
+          } else {
+            console.warn("No centroid found for:", name);
+          }
+        });
 
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-
-                const geojsonData = await response.json();
-                
-                ul.innerHTML = '';
-                let countryNames = [];
-
-                if (geojsonData.type === 'FeatureCollection' && Array.isArray(geojsonData.features)) {
-                    
-                    geojsonData.features.forEach(feature => {
-                        if (feature.properties && feature.properties[nameKey]) {
-                            const countryName = feature.properties[nameKey];
-                            
-                            // 1. Collect name for the formatted list
-                            countryNames.push(countryName);
-                            
-                            // 2. Add to the standard list display
-                            const li = document.createElement('li');
-                            li.textContent = countryName;
-                            ul.appendChild(li);
-                        }
-                    });
-
-                    // 3. Format the list for Python: "name1", "name2", ...
-                    const formattedString = countryNames
-                        .map(name => `"${name}"`) // Wrap each name in double quotes
-                        .join(',\n    '); // Join with a comma and new line for readability
-                    
-                    // Add brackets for a complete Python list syntax
-                    pre.textContent = `[\n    ${formattedString}\n]`;
-
-                    // Add a click-to-copy functionality
-                    pre.onclick = () => {
-                        navigator.clipboard.writeText(pre.textContent.trim())
-                            .then(() => {
-                                alert('Python list copied to clipboard!');
-                            })
-                            .catch(err => {
-                                console.error('Could not copy text: ', err);
-                            });
-                    };
-
-                } else {
-                    ul.innerHTML = '<li>Error: GeoJSON file is not a valid FeatureCollection.</li>';
-                    pre.textContent = 'Error processing file.';
-                }
-
-            } catch (error) {
-                ul.innerHTML = `<li>Error loading or parsing file: ${error.message}</li>`;
-                pre.textContent = `Error: ${error.message}`;
-                console.error('Fetch error:', error);
-            }
-        }
-
-        getCountryNames();
-    </script>
+        // Output JSON
+        const outputEl = document.getElementById("output");
+        outputEl.value = JSON.stringify(labelGeoJSON, null, 2);
+        console.log("Generated GeoJSON:", labelGeoJSON);
+      })
+      .catch(err => console.error("Failed to load centroids dataset:", err));
+  </script>
 </body>
 </html>
