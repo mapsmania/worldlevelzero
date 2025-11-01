@@ -116,7 +116,7 @@ map.on("load", async () => {
     source: "selected-country-labels",
     layout: {
       "text-field": ["get", "name"],
-      "text-font": ["Noto Sans Bold]", 
+      "text-font": ["Noto Sans Bold"], 
       "text-size": 12,
       "text-anchor": "center",
     },
