@@ -193,12 +193,12 @@ input {
   z-index: 40;
   width: 100%;
   border-radius: 9999px;
-  padding: 0.5rem 1rem;
+  padding: 0.5rem 1.75rem; /* ⬅️ Increased horizontal padding */
   font-size: 1.125rem;
   font-weight: bold;
   color: #18181b;
   caret-color: currentColor;
-  height: 48px; /* Optional: enforce same height */
+  height: 48px;
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
               0 4px 6px -4px rgba(0, 0, 0, 0.1);
   outline: none;
