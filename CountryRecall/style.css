@@ -41,6 +41,7 @@ html, body {
   flex-shrink: 0;
 }
 
+
 .chart-inner {
   position: relative;
   width: 120px;
