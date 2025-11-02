@@ -157,3 +157,48 @@ input:focus::placeholder {
   opacity: 0;
 }
 
+/* Modal Buttons */
+#reset-confirmation .btn {
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 100px;
+}
+
+/* Primary Confirm Button */
+#reset-confirmation .btn-primary {
+  background-color: #ff4d4f; /* Red for reset/danger */
+  color: white;
+  border: none;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+#reset-confirmation .btn-primary:hover {
+  background-color: #d9363e;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+#reset-confirmation .btn-primary:active {
+  transform: scale(0.95);
+}
+
+/* Cancel Button */
+#reset-confirmation .btn-outline {
+  background-color: #f0f0f0;
+  color: #333;
+  border: 1px solid #ccc;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+#reset-confirmation .btn-outline:hover {
+  background-color: #e0e0e0;
+  transform: translateY(-1px);
+}
+
+#reset-confirmation .btn-outline:active {
+  transform: scale(0.95);
+}
