@@ -147,3 +147,13 @@ input:focus::placeholder {
   align-items: center;
   z-index: 20;
 }
+
+#reset-confirmation {
+  transition: opacity 0.2s ease;
+}
+
+#reset-confirmation.hidden {
+  display: none;
+  opacity: 0;
+}
+
