@@ -232,5 +232,37 @@ input {
   z-index: 20;
 }
 
+#reset-button {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  z-index: 30; /* Above the map but below dialogs */
+  background: white;
+  border: none;
+  border-radius: 50%;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+  padding: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#reset-button img {
+  width: 24px;
+  height: 24px;
+}
+
+#reset-button:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+}
+
+#reset-button:active {
+  transform: scale(0.95);
+}
 
 
