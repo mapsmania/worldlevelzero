@@ -4,9 +4,12 @@
   <meta charset="utf-8" />
   <title>World Recall</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <link
+  <!-- Load Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Load html2canvas -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <!-- Load MapLibre and Chart.js -->
+  <link
     href="https://unpkg.com/maplibre-gl@3.6.1/dist/maplibre-gl.css"
     rel="stylesheet"
   />
@@ -15,7 +18,8 @@
   <script src="https://unpkg.com/maplibre-gl@3.6.1/dist/maplibre-gl.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   
-    <link rel="stylesheet" href="style.css">
+  <!-- Link to the external CSS file (style.css) -->
+  <link rel="stylesheet" href="style.css">
 
   <script>
     // Set a placeholder 'Inter' font via Tailwind config
@@ -34,82 +38,132 @@
 
   <div id="map"></div>
 
- <div class="absolute top-4 left-0 w-full flex justify-between items-center px-4 z-20">
+ <!-- Top bar -->
+<div class="absolute top-4 left-0 w-full flex justify-between items-center px-4 z-20">
 
-    <div id="visited-counter"
+  <!-- Left counter -->
+  <div id="visited-counter"
        class="bg-white/90 backdrop-blur-md px-4 py-2 rounded-lg shadow-md text-gray-800 font-semibold">
     <span id="totalClicked">0</span> Countries Named
   </div>
 
-    <div class="overlay relative">
+  <!-- Center overlay input -->
+  <div class="overlay relative">
     <input id="text_a" type="text" placeholder="TYPE A COUNTRY NAME" />
-
-    <div class="text-center mt-2">
-        <img src="reset.png" alt="Reset Map" id="reset-button" class="w-10 h-10 cursor-pointer mx-auto" title="Reset Game" />
-    </div>
   </div>
 
-    <div id="world-counter"
+  <!-- Right counter -->
+  <div id="world-counter"
        class="bg-white/90 backdrop-blur-md px-4 py-2 rounded-lg shadow-md text-gray-800 font-semibold">
     <span id="worldPercent">0%</span> World Named
-    </div>
+  </div>
 
 </div>
 
-   <div id="charts-wrapper">
-    
+  <!-- Charts panel -->
+
+ <div id="charts-wrapper">
+
   <div class="chart-box">
+
     <div class="chart-inner">
+
       <canvas id="EuropeChart" width="120" height="120"></canvas>
+
       <div class="chart-label" id="EuropeChartLabel">0%</div>
+
     </div>
+
     <div class="continent-name">Europe</div>
+
   </div>
 
+
+
   <div class="chart-box">
+
     <div class="chart-inner">
+
       <canvas id="AsiaChart" width="120" height="120"></canvas>
+
       <div class="chart-label" id="AsiaChartLabel">0%</div>
+
     </div>
+
     <div class="continent-name">Asia</div>
+
   </div>
 
+
+
   <div class="chart-box">
+
     <div class="chart-inner">
+
       <canvas id="AfricaChart" width="120" height="120"></canvas>
+
       <div class="chart-label" id="AfricaChartLabel">0%</div>
+
     </div>
+
     <div class="continent-name">Africa</div>
+
   </div>
 
+
+
   <div class="chart-box">
+
     <div class="chart-inner">
+
       <canvas id="NorthAmericaChart" width="120" height="120"></canvas>
+
       <div class="chart-label" id="NorthAmericaChartLabel">0%</div>
-      </div>
+
+    </div>
+
     <div class="continent-name">North America</div>
+
   </div>
 
+
+
   <div class="chart-box">
+
     <div class="chart-inner">
+
       <canvas id="SouthAmericaChart" width="120" height="120"></canvas>
+
       <div class="chart-label" id="SouthAmericaChartLabel">0%</div>
+
     </div>
+
     <div class="continent-name">South America</div>
+
   </div>
 
+
+
   <div class="chart-box">
+
     <div class="chart-inner">
+
       <canvas id="OceaniaChart" width="120" height="120"></canvas>
+
       <div class="chart-label" id="OceaniaChartLabel">0%</div>
+
     </div>
+
     <div class="continent-name">Oceania</div>
+
   </div>
 
 </div>
+
 
   <script src="script.js"></script>
 
 </body>
+
 
 </html>
