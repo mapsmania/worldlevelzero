@@ -326,3 +326,55 @@ function updateTotalClickedCount() {
     percentEl.textContent = `${percent}%`;
   }
 }
+
+// ===============================
+// Reset Button with Confirmation
+// ===============================
+const resetButton = document.getElementById("reset-button");
+
+resetButton.addEventListener("click", () => {
+  const confirmed = confirm(
+    "Do you really want to delete your saved countries? This will set all your scores back to zero."
+  );
+
+  if (!confirmed) return; // User canceled, do nothing
+
+  // Clear local storage
+  localStorage.removeItem("clickedCountries");
+  localStorage.removeItem("continentProgress");
+
+  // Clear in-memory data
+  clickedCountries = [];
+  for (const cont in clickedCountriesByContinent) {
+    clickedCountriesByContinent[cont].clear();
+  }
+
+  // Reset charts
+  continents.forEach((cont) => {
+    const chart = continentCharts[cont];
+    if (chart) {
+      chart.data.datasets[0].data = [0, 100];
+      chart.update();
+      const labelEl = document.getElementById(`${cont.replace(" ", "")}ChartLabel`);
+      if (labelEl) labelEl.textContent = "0%";
+    }
+  });
+
+  // Reset counters
+  const totalEl = document.getElementById("totalClicked");
+  const percentEl = document.getElementById("worldPercent");
+  const totalCountries = worldData ? worldData.features.length : 195;
+  if (totalEl) totalEl.textContent = `0 / ${totalCountries}`;
+  if (percentEl) percentEl.textContent = "0%";
+
+  // Clear map layers
+  map.getSource("selected-countries").setData({
+    type: "FeatureCollection",
+    features: [],
+  });
+  map.getSource("selected-country-labels").setData({
+    type: "FeatureCollection",
+    features: [],
+  });
+});
+
