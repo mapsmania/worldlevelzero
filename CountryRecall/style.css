@@ -18,15 +18,15 @@ html, body {
 
 #charts-wrapper {
   position: absolute;
-  bottom: 10px;
+  bottom: 70px; /* was 10px — lifted above reset button */
   left: 50%;
   transform: translateX(-50%);
-  width: auto; /* or max-width: 90% */
+  width: max-content;
   min-height: 160px;
   z-index: 20;
   display: flex;
   gap: 24px;
-  padding: 16px;
+  padding: 12px;
   overflow-x: auto;
 }
 
