@@ -236,19 +236,19 @@ input {
   position: absolute;
   bottom: 20px;
   left: 20px;
-  z-index: 30; /* Above the map but below dialogs */
+  z-index: 30;
   background: white;
   border: none;
   border-radius: 50%;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-  padding: 8px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  width: 48px;
-  height: 48px;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+  padding: 4px;        /* ↓ smaller padding */
+  width: 36px;         /* ↓ smaller diameter */
+  height: 36px;
   display: flex;
   justify-content: center;
   align-items: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
 #reset-button img {
