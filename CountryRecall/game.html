@@ -41,24 +41,24 @@
  <!-- Top bar -->
 <div class="absolute top-4 left-0 w-full flex justify-between items-center px-4 z-20">
 
-  <!-- Left counter -->
-  <div id="visited-counter"
-       class="bg-white/90 backdrop-blur-md px-4 py-2 rounded-lg shadow-md text-gray-800 font-semibold">
-    <span id="totalClicked">0</span> Countries Named
-  </div>
-
+  
   <!-- Center overlay input -->
   <div class="overlay relative">
     <input id="text_a" type="text" placeholder="TYPE A COUNTRY NAME" />
   </div>
 
-  <!-- Right counter and reset button -->
+  <!-- counters and reset button -->
   <div class="flex flex-col items-center space-y-2">
 
     <div id="world-counter"
          class="bg-white/90 backdrop-blur-md px-4 py-2 rounded-lg shadow-md text-gray-800 font-semibold text-center">
       <span id="worldPercent">0%</span> World Named
     </div>
+    <!-- Left counter -->
+  <div id="visited-counter"
+       class="bg-white/90 backdrop-blur-md px-4 py-2 rounded-lg shadow-md text-gray-800 font-semibold">
+    <span id="totalClicked">0</span> Countries Named
+  </div>
 
     <!-- Reset Button -->
     <button id="resetButton" class="focus:outline-none" title="Reset Game">
