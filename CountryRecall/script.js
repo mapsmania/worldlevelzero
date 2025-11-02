@@ -328,16 +328,24 @@ function updateTotalClickedCount() {
 }
 
 // ===============================
-// Reset Button with Confirmation
+// Reset Button with Custom Modal
 // ===============================
 const resetButton = document.getElementById("reset-button");
+const resetModal = document.getElementById("reset-confirmation");
+const confirmReset = document.getElementById("confirm-reset");
+const cancelReset = document.getElementById("cancel-reset");
 
 resetButton.addEventListener("click", () => {
-  const confirmed = confirm(
-    "Do you really want to delete your saved countries? This will set all your scores back to zero."
-  );
+  resetModal.classList.remove("hidden"); // Show modal
+});
 
-  if (!confirmed) return; // User canceled, do nothing
+cancelReset.addEventListener("click", () => {
+  resetModal.classList.add("hidden"); // Hide modal
+});
+
+confirmReset.addEventListener("click", () => {
+  // Hide modal
+  resetModal.classList.add("hidden");
 
   // Clear local storage
   localStorage.removeItem("clickedCountries");
@@ -377,4 +385,3 @@ resetButton.addEventListener("click", () => {
     features: [],
   });
 });
-
