@@ -22,7 +22,7 @@ html, body {
   left: 50%;
   transform: translateX(-50%);
   width: max-content;
-  min-height: 160px;
+  min-height: 152px;
   z-index: 20;
   display: flex;
   gap: 24px;
