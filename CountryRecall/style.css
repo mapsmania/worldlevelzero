@@ -18,7 +18,7 @@ html, body {
 
 #charts-wrapper {
   position: absolute;
-  bottom: 70px; /* was 10px — lifted above reset button */
+  bottom: 10px; /* was 10px — lifted above reset button */
   left: 50%;
   transform: translateX(-50%);
   width: max-content;
@@ -34,7 +34,7 @@ html, body {
 .chart-box {
   background: white;
   border-radius: 0.75rem;
-  padding: 12px;
+  padding: 1px;
   text-align: center;
   box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1),
               0 2px 4px -2px rgb(0 0 0 / 0.1);
