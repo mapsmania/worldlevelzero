@@ -6,7 +6,7 @@
   button { padding:8px 12px; border-radius:6px; border:none; background:#222; color:#fff; cursor:pointer; }
   button.active { background:#4CAF50; }
   svg { display:block; margin:auto; }
-  #label {
+  .label {
     font-size:22px;
     font-weight:600;
     fill:#fff;
@@ -28,6 +28,7 @@
 <script src="https://d3js.org/d3.v7.min.js"></script>
 <script src="https://unpkg.com/topojson-client@3"></script>
 <script src="https://unpkg.com/d3-geo-projection@4"></script>
+
 <script>
 (async function(){
   const width = 960, height = 520;
@@ -35,12 +36,18 @@
   const gA = svg.append("g").attr("class","layerA");
   const gB = svg.append("g").attr("class","layerB");
 
-  // add a centered label under the map
-  const label = svg.append("text")
-      .attr("id","label")
+  // create two labels
+  const labelA = svg.append("text")
+      .attr("class","label")
       .attr("x", width/2)
-      .attr("y", height - 20)
-      .text("");
+      .attr("y", height-20)
+      .style("opacity",1);
+
+  const labelB = svg.append("text")
+      .attr("class","label")
+      .attr("x", width/2)
+      .attr("y", height-20)
+      .style("opacity",0);
 
   const path = d3.geoPath();
 
@@ -76,15 +83,27 @@
   drawLayer(gB, projBName);
   gA.style("opacity",1);
   gB.style("opacity",0);
-  label.text("Mercator");
+  labelA.text(projAName[0].toUpperCase()+projAName.slice(1));
+  labelB.text(projBName[0].toUpperCase()+projBName.slice(1));
 
   async function crossfade(fromName,toName,duration=1800){
     drawLayer(gA, fromName);
     drawLayer(gB, toName);
-    label.text(`${fromName[0].toUpperCase()+fromName.slice(1)} → ${toName[0].toUpperCase()+toName.slice(1)}`);
+    labelA.text(fromName[0].toUpperCase()+fromName.slice(1));
+    labelB.text(toName[0].toUpperCase()+toName.slice(1));
+
     gA.raise();
+    labelA.raise();
+    labelB.raise();
+
+    // fade map layers
     gA.transition().duration(duration).ease(d3.easeCubicInOut).style("opacity",0);
     gB.transition().duration(duration).ease(d3.easeCubicInOut).style("opacity",1);
+
+    // fade labels in sync
+    labelA.transition().duration(duration).ease(d3.easeCubicInOut).style("opacity",0);
+    labelB.transition().duration(duration).ease(d3.easeCubicInOut).style("opacity",1);
+
     await new Promise(r=>setTimeout(r,duration+50));
   }
 
@@ -95,9 +114,12 @@
     projBName=this.dataset.to;
     gA.style("opacity",1);
     gB.style("opacity",0);
+    labelA.style("opacity",1);
+    labelB.style("opacity",0);
     drawLayer(gA,projAName);
     drawLayer(gB,projBName);
-    label.text(`${projAName[0].toUpperCase()+projAName.slice(1)}`);
+    labelA.text(projAName[0].toUpperCase()+projAName.slice(1));
+    labelB.text(projBName[0].toUpperCase()+projBName.slice(1));
   });
 
   let playing=false;
