@@ -45,7 +45,6 @@
 
   const projections = ["mercator", "mollweide", "robinson", "orthographic"];
   let currentIndex = 0;
-  let animating = true;
 
   function makeProjection(name){
     const s = 150, c = [width/2, height/2];
@@ -72,8 +71,6 @@
     path.projection(proj);
     g.selectAll("path").transition().duration(1000).attr("d", path);
     label.text(projName[0].toUpperCase() + projName.slice(1));
-    // Update header highlight
-    d3.selectAll("#proj-header span").classed("active", d=>d3.select(d).attr("data-proj") === projName);
     d3.selectAll("#proj-header span").each(function(){
       this.classList.toggle("active", this.dataset.proj === projName);
     });
@@ -94,12 +91,10 @@
   // Initial projection
   updateProjection(projections[currentIndex]);
 
-  // Loop animation
+  // Looping animation: advance every 2.5s
   d3.interval(()=>{
-    if(animating){
-      nextProjection();
-    }
-  }, 2500); // 2.5s per projection
+    nextProjection();
+  }, 2500);
 
 })();
 </script>
