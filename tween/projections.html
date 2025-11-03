@@ -3,10 +3,15 @@
 <style>
   body { background:#111; color:#fff; font-family: sans-serif; margin:0; }
   header { padding:10px; display:flex; gap:8px; align-items:center; }
-  button { padding:8px 12px; border-radius:6px; border: none; background:#222; color:#fff; cursor:pointer; }
+  button { padding:8px 12px; border-radius:6px; border:none; background:#222; color:#fff; cursor:pointer; }
   button.active { background:#4CAF50; }
   svg { display:block; margin:auto; }
-  #container { text-align:center; padding:8px 0 0 0; }
+  #label {
+    font-size:22px;
+    font-weight:600;
+    fill:#fff;
+    text-anchor:middle;
+  }
 </style>
 <body>
 <header>
@@ -18,120 +23,97 @@
   </div>
 </header>
 
-<div id="container">
-  <svg id="map" width="960" height="500"></svg>
-</div>
+<svg id="map" width="960" height="520"></svg>
 
 <script src="https://d3js.org/d3.v7.min.js"></script>
 <script src="https://unpkg.com/topojson-client@3"></script>
 <script src="https://unpkg.com/d3-geo-projection@4"></script>
-
 <script>
 (async function(){
-  const width = 960, height = 500;
+  const width = 960, height = 520;
   const svg = d3.select("#map");
   const gA = svg.append("g").attr("class","layerA");
   const gB = svg.append("g").attr("class","layerB");
-  const overlay = svg.append("g").attr("class","overlay"); // for UI overlays if needed
 
-  // basic path generator we will set projection on
+  // add a centered label under the map
+  const label = svg.append("text")
+      .attr("id","label")
+      .attr("x", width/2)
+      .attr("y", height - 20)
+      .text("");
+
   const path = d3.geoPath();
 
-  // helper to create projection by name
   function makeProjection(name){
-    const center = [width/2, height/2];
-    const commonScale = 150;
+    const s=150, c=[width/2,height/2];
     switch(name){
-      case "mercator": return d3.geoMercator().scale(commonScale).translate([width/2, height/2]);
-      case "mollweide": return d3.geoMollweide().scale(commonScale).translate([width/2, height/2]);
-      case "robinson": return d3.geoRobinson().scale(commonScale).translate([width/2, height/2]);
-      case "orthographic": return d3.geoOrthographic().scale(200).translate([width/2, height/2]).clipAngle(90);
-      default: return d3.geoMercator().scale(commonScale).translate([width/2, height/2]);
+      case "mercator":     return d3.geoMercator().scale(s).translate(c);
+      case "mollweide":    return d3.geoMollweide().scale(s).translate(c);
+      case "robinson":     return d3.geoRobinson().scale(s).translate(c);
+      case "orthographic": return d3.geoOrthographic().scale(200).translate(c).clipAngle(90);
+      default:             return d3.geoMercator().scale(s).translate(c);
     }
   }
 
-  // load world data (TopoJSON)
   const topo = await d3.json("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json");
   const countries = topojson.feature(topo, topo.objects.countries).features;
 
-  // function to draw a layer for a projection
-  function drawLayer(group, projectionName){
-    const proj = makeProjection(projectionName);
+  function drawLayer(group, projName){
+    const proj = makeProjection(projName);
     path.projection(proj);
-
-    // Bind data; keep element identity stable via index
-    const sel = group.selectAll("path").data(countries, d => d.id || (d.properties && d.properties.name) || (Math.random()));
-
-    sel.join(
-      enter => enter.append("path")
-                     .attr("d", path)
-                     .attr("fill", "#4CAF50")
-                     .attr("stroke", "#111")
-                     .attr("stroke-width", 0.4)
-                     .attr("opacity", 1),
-      update => update.attr("d", path),
-      exit => exit.remove()
-    );
+    group.selectAll("path")
+      .data(countries)
+      .join("path")
+      .attr("d", path)
+      .attr("fill", "#4CAF50")
+      .attr("stroke", "#111")
+      .attr("stroke-width", 0.4);
     return proj;
   }
 
-  // initial draw
   let projAName = "mercator", projBName = "mollweide";
   drawLayer(gA, projAName);
   drawLayer(gB, projBName);
-  gA.style("opacity", 1);
-  gB.style("opacity", 0);
+  gA.style("opacity",1);
+  gB.style("opacity",0);
+  label.text("Mercator");
 
-  // crossfade animation: fade A->B over duration, then swap
-  let playing = false;
-  async function crossfade(fromName, toName, duration = 1800){
-    // ensure both layers drawn with current projections
+  async function crossfade(fromName,toName,duration=1800){
     drawLayer(gA, fromName);
     drawLayer(gB, toName);
-
-    // bring A on top for correct visual stacking (optional)
+    label.text(`${fromName[0].toUpperCase()+fromName.slice(1)} → ${toName[0].toUpperCase()+toName.slice(1)}`);
     gA.raise();
-
-    // animate opacity from 1 -> 0 on A, 0 -> 1 on B
-    gA.transition().duration(duration).ease(d3.easeCubicInOut).style("opacity", 0);
-    gB.transition().duration(duration).ease(d3.easeCubicInOut).style("opacity", 1);
-
-    // wait for transition to finish
-    await new Promise(resolve => setTimeout(resolve, duration + 50));
+    gA.transition().duration(duration).ease(d3.easeCubicInOut).style("opacity",0);
+    gB.transition().duration(duration).ease(d3.easeCubicInOut).style("opacity",1);
+    await new Promise(r=>setTimeout(r,duration+50));
   }
 
-  // UI: buttons to select transitions
-  d3.selectAll("button[data-from]").on("click", function(){
-    d3.selectAll("button[data-from]").classed("active", false);
-    d3.select(this).classed("active", true);
-
-    projAName = this.dataset.from;
-    projBName = this.dataset.to;
-    // reset opacities and draw immediate
-    gA.style("opacity", 1);
-    gB.style("opacity", 0);
-    drawLayer(gA, projAName);
-    drawLayer(gB, projBName);
+  d3.selectAll("button[data-from]").on("click",function(){
+    d3.selectAll("button[data-from]").classed("active",false);
+    d3.select(this).classed("active",true);
+    projAName=this.dataset.from;
+    projBName=this.dataset.to;
+    gA.style("opacity",1);
+    gB.style("opacity",0);
+    drawLayer(gA,projAName);
+    drawLayer(gB,projBName);
+    label.text(`${projAName[0].toUpperCase()+projAName.slice(1)}`);
   });
 
-  d3.select("#play").on("click", function(){
-    playing = !playing;
-    d3.select(this).text(playing ? "Stop" : "Play");
+  let playing=false;
+  d3.select("#play").on("click",function(){
+    playing=!playing;
+    d3.select(this).text(playing?"Stop":"Play");
     if(playing) runLoop();
   });
 
-  // loop that crossfades back and forth
   async function runLoop(){
     while(playing){
       await crossfade(projAName, projBName, 1600);
-      await new Promise(r => setTimeout(r, 600));
+      await new Promise(r=>setTimeout(r,600));
       await crossfade(projBName, projAName, 1600);
-      await new Promise(r => setTimeout(r, 600));
+      await new Promise(r=>setTimeout(r,600));
     }
   }
-
-  // handy: start autoplay once loaded
-  // playing = true; runLoop();
-
 })();
 </script>
