@@ -13,7 +13,8 @@
 <script>
 const width = 960, height = 500;
 const svg = d3.select("svg");
-const path = d3.geoPath();
+// We define path without a projection initially, as it will be set in the loop
+const path = d3.geoPath(); 
 
 d3.json("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json").then(world => {
   const countries = topojson.feature(world, world.objects.countries).features;
@@ -25,29 +26,36 @@ d3.json("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json").then(w
     .data(countries)
     .join("path");
 
-  const projA = d3.geoMercator().scale(150).translate([width/2,height/2]);
-  const projB = d3.geoMollweide().scale(150).translate([width/2,height/2]);
+  // Define interpolators outside the loop for efficiency
+  // This will interpolate the scale (zoom) from 100 to 250
+  const scaleInterp = d3.interpolate(100, 250); 
+  // This will interpolate the rotation (spin) from -20 degrees (Atlantic-centric) to -180 degrees (Pacific-centric)
+  const rotateInterp = d3.interpolate([-20, 0], [-180, 0]); 
 
   let t = 0, dir = 1;
+  
   function frame(){
     t += dir * 0.01;
-    if(t>=1){t=1;dir=-1;}
-    if(t<=0){t=0;dir=1;}
+    // Reverse direction at the limits [0, 1]
+    if(t >= 1){t = 1; dir = -1;}
+    if(t <= 0){t = 0; dir = 1;}
 
-    const interpProj = d3.geoProjection((lambda, phi)=>{
-      const lon=lambda*180/Math.PI, lat=phi*180/Math.PI;
-      const a=projA([lon,lat]), b=projB([lon,lat]);
-      if(!a||!b||!isFinite(a[0])||!isFinite(a[1])||!isFinite(b[0])||!isFinite(b[1])) return [NaN,NaN];
-      return [a[0]*(1-t)+b[0]*t, a[1]*(1-t)+b[1]*t];
-    })
-    .scale(150).translate([width/2,height/2]);
+    // ✅ CORRECTION: Use a single stable projection type (e.g., Mercator)
+    // and animate its configuration parameters.
+    const proj = d3.geoMercator()
+      .scale(scaleInterp(t))
+      .rotate(rotateInterp(t))
+      .translate([width/2, height/2]);
 
-    path.projection(interpProj);
-    g.attr("d", d=>path(d));
+    // Apply the new projection to the path generator
+    path.projection(proj);
+    
+    // Update the 'd' attribute of the paths
+    g.attr("d", d => path(d));
   }
 
-  // run at ~20fps
-  d3.interval(frame,50);
+  // run at ~20fps (every 50ms)
+  d3.interval(frame, 50);
 });
 </script>
 </body>
