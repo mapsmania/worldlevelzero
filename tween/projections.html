@@ -71,48 +71,73 @@
   let projAName = "mercator", projBName = "mollweide";
   drawLayer(gA, projAName);
   drawLayer(gB, projBName);
-  gA.style("opacity",1);
-  gB.style("opacity",0);
-  labelA.text(projAName[0].toUpperCase()+projAName.slice(1));
-  labelB.text(projBName[0].toUpperCase()+projBName.slice(1));
+
+  // Initialize the visual state
+  let activeLayer = gA, inactiveLayer = gB;
+  let activeLabel = labelA, inactiveLabel = labelB;
+  activeLayer.style("opacity",1);
+  inactiveLayer.style("opacity",0);
+  activeLabel.text(projAName[0].toUpperCase()+projAName.slice(1)).style("opacity",1);
+  inactiveLabel.text(projBName[0].toUpperCase()+projBName.slice(1)).style("opacity",0);
+
 
   // safe async transition
   function fadeTransition(selection, targetOpacity, duration=1600){
     return new Promise(resolve=>{
-      selection.transition().duration(duration).ease(d3.easeCubicInOut).style("opacity",targetOpacity).on("end", resolve);
+      // **CRITICAL FIX:** Stop any existing transitions to prevent interference
+      selection.interrupt().transition().duration(duration).ease(d3.easeCubicInOut).style("opacity",targetOpacity).on("end", resolve);
     });
   }
 
   async function crossfade(fromName, toName){
-    drawLayer(gA, fromName);
-    drawLayer(gB, toName);
-    labelA.text(fromName[0].toUpperCase()+fromName.slice(1));
-    labelB.text(toName[0].toUpperCase()+toName.slice(1));
+    // Draw the new 'to' projection onto the currently inactive layer
+    drawLayer(inactiveLayer, toName);
+    inactiveLabel.text(toName[0].toUpperCase()+toName.slice(1));
+    
+    // Ensure the incoming layer is on top for the fade-in
+    inactiveLayer.raise(); activeLayer.raise(); // Re-raise both to ensure the right layer is on top
+    inactiveLabel.raise(); activeLabel.raise();
 
-    gA.raise(); gB.raise(); labelA.raise(); labelB.raise();
-
+    // Perform the crossfade: inactive IN (to 1), active OUT (to 0)
     await Promise.all([
-      fadeTransition(gA,0),
-      fadeTransition(gB,1),
-      fadeTransition(labelA,0),
-      fadeTransition(labelB,1)
+      fadeTransition(activeLayer, 0),
+      fadeTransition(inactiveLayer, 1),
+      fadeTransition(activeLabel, 0),
+      fadeTransition(inactiveLabel, 1)
     ]);
+    
+    // **CRITICAL STEP:** SWAP the layer references for the next transition
+    [activeLayer, inactiveLayer] = [inactiveLayer, activeLayer];
+    [activeLabel, inactiveLabel] = [inactiveLabel, activeLabel];
+    
+    // Now, the layer that just faded IN is the new activeLayer, and vice-versa.
   }
 
-  // button handlers
-  d3.selectAll("button[data-from]").on("click",function(){
+  // button handlers (modified to reset the visual state)
+  d3.selectAll("button[data-from]").on("click",async function(){
     d3.selectAll("button[data-from]").classed("active",false);
     d3.select(this).classed("active",true);
+    
+    // Stop the loop if playing
+    playing = false; 
+    d3.select("#play").text("Play");
+
+    // Reset initial state to Mercator -> Mollweide (or whatever is clicked)
     projAName = this.dataset.from;
     projBName = this.dataset.to;
-    gA.style("opacity",1);
-    gB.style("opacity",0);
-    labelA.style("opacity",1);
-    labelB.style("opacity",0);
-    drawLayer(gA,projAName);
-    drawLayer(gB,projBName);
-    labelA.text(projAName[0].toUpperCase()+projAName.slice(1));
-    labelB.text(projBName[0].toUpperCase()+projBName.slice(1));
+
+    // Reset visual layers to initial state (gA visible, gB hidden)
+    activeLayer = gA; inactiveLayer = gB;
+    activeLabel = labelA; inactiveLabel = labelB;
+
+    // Redraw and reset opacity/text immediately
+    drawLayer(activeLayer, projAName);
+    drawLayer(inactiveLayer, projBName);
+    activeLayer.style("opacity", 1);
+    inactiveLayer.style("opacity", 0);
+    
+    activeLabel.text(projAName[0].toUpperCase()+projAName.slice(1)).style("opacity",1);
+    inactiveLabel.text(projBName[0].toUpperCase()+projBName.slice(1)).style("opacity",0);
   });
 
   let playing=false;
@@ -122,13 +147,16 @@
     if(playing) runLoop();
   });
 
-  // looping crossfade
+  // looping crossfade (simplified)
   async function runLoop(){
     while(playing){
+      // Fade from current active (projAName) to new (projBName)
       await crossfade(projAName, projBName);
       await new Promise(r=>setTimeout(r,600));
-      await crossfade(projBName, projAName);
-      await new Promise(r=>setTimeout(r,600));
+
+      // The activeLayer and inactiveLayer variables have been swapped inside crossfade.
+      // Now, simply swap the projection names for the next cycle
+      [projAName, projBName] = [projBName, projAName]; 
     }
   }
 
