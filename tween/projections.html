@@ -13,8 +13,7 @@
 <script>
 const width = 960, height = 500;
 const svg = d3.select("svg");
-// We define path without a projection initially, as it will be set in the loop
-const path = d3.geoPath(); 
+const path = d3.geoPath();
 
 d3.json("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json").then(world => {
   const countries = topojson.feature(world, world.objects.countries).features;
@@ -26,11 +25,10 @@ d3.json("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json").then(w
     .data(countries)
     .join("path");
 
-  // Define interpolators outside the loop for efficiency
-  // This will interpolate the scale (zoom) from 100 to 250
-  const scaleInterp = d3.interpolate(100, 250); 
-  // This will interpolate the rotation (spin) from -20 degrees (Atlantic-centric) to -180 degrees (Pacific-centric)
-  const rotateInterp = d3.interpolate([-20, 0], [-180, 0]); 
+  // Define interpolators for scale and rotation to use during the animation phase
+  // These will give a sense of continuous motion
+  const scaleInterp = d3.interpolate(150, 200); 
+  const rotateInterp = d3.interpolate([-10, 0], [-180, 0]); 
 
   let t = 0, dir = 1;
   
@@ -40,14 +38,30 @@ d3.json("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json").then(w
     if(t >= 1){t = 1; dir = -1;}
     if(t <= 0){t = 0; dir = 1;}
 
-    // ✅ CORRECTION: Use a single stable projection type (e.g., Mercator)
-    // and animate its configuration parameters.
-    const proj = d3.geoMercator()
-      .scale(scaleInterp(t))
-      .rotate(rotateInterp(t))
-      .translate([width/2, height/2]);
+    let proj;
 
-    // Apply the new projection to the path generator
+    // Use a normalized time 't_anim' (0 to 1) for interpolating parameters
+    let t_anim = (t < 0.5) ? t * 2 : (t - 0.5) * 2; // Rescale t to 0-1 for each half cycle
+
+    // 1. **Projection A (Mercator) for the first half of the cycle (t = 0 to 0.5)**
+    if (t < 0.5) {
+      proj = d3.geoMercator()
+        // Interpolate parameters during this phase
+        .scale(scaleInterp(t_anim))
+        .rotate(rotateInterp(t_anim))
+        .translate([width/2, height/2]);
+        
+    // 2. **Projection B (Mollweide) for the second half of the cycle (t = 0.5 to 1)**
+    } else {
+      // NOTE: Mollweide looks visually distinct from Mercator, giving the "switch" effect
+      proj = d3.geoMollweide()
+        // Interpolate parameters during this phase (you can reverse the interpolators for a smoother cycle)
+        .scale(scaleInterp(1 - t_anim)) // Reverse the scale animation
+        .rotate(rotateInterp(1 - t_anim)) // Reverse the rotation animation
+        .translate([width/2, height/2]);
+    }
+
+    // Apply the current projection to the path generator
     path.projection(proj);
     
     // Update the 'd' attribute of the paths
