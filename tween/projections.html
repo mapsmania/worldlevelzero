@@ -17,20 +17,15 @@
 <script src="https://d3js.org/d3.v7.min.js"></script>
 <script src="https://unpkg.com/topojson-client@3"></script>
 <script src="https://unpkg.com/d3-geo-projection@4"></script>
-
 <script>
 
 // --- Setup ---
 const width = 960, height = 500;
 const svg = d3.select("svg");
 
-const projection = d3.geoMercator()
-  .scale(150)
-  .translate([width / 2, height / 2]);
+const path = d3.geoPath();
 
-const path = d3.geoPath(projection);
-
-// --- Load World Data (simpler and faster than a custom GeoJSON) ---
+// --- Load World Data ---
 d3.json("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json").then(world => {
 
   const countries = topojson.feature(world, world.objects.countries).features;
@@ -41,26 +36,31 @@ d3.json("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json").then(w
     .data(countries)
     .join("path")
     .attr("fill", "#4CAF50")
-    .attr("stroke", "#222")
-    .attr("d", path);
+    .attr("stroke", "#222");
 
   // --- Projections ---
   const projA = d3.geoMercator().scale(150).translate([width/2, height/2]);
   const projB = d3.geoMollweide().scale(150).translate([width/2, height/2]);
 
-  // --- Interpolator between projections ---
+  // --- Safe interpolation between projections ---
   function interpolateProjection(projA, projB, alpha) {
     const proj = d3.geoProjection((lambda, phi) => {
-      const pA = projA([lambda * 180/Math.PI, phi * 180/Math.PI]);
-      const pB = projB([lambda * 180/Math.PI, phi * 180/Math.PI]);
-      if (!pA || !pB) return [NaN, NaN];
+      const lon = lambda * 180 / Math.PI;
+      const lat = phi * 180 / Math.PI;
+      const pA = projA([lon, lat]);
+      const pB = projB([lon, lat]);
+
+      if (!pA || !pB || !isFinite(pA[0]) || !isFinite(pA[1]) || !isFinite(pB[0]) || !isFinite(pB[1])) {
+        // return invalid so D3 skips it
+        return [NaN, NaN];
+      }
       return [
         pA[0] * (1 - alpha) + pB[0] * alpha,
         pA[1] * (1 - alpha) + pB[1] * alpha
       ];
     })
     .scale(150)
-    .translate([width/2, height/2]);
+    .translate([width / 2, height / 2]);
     return proj;
   }
 
@@ -73,7 +73,16 @@ d3.json("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json").then(w
         return t => {
           const newProj = interpolateProjection(pA, pB, t);
           path.projection(newProj);
-          svg.selectAll("path").attr("d", path);
+          svg.selectAll("path")
+            .attr("d", d => {
+              try {
+                const p = path(d);
+                if (!p || p.includes("NaN")) return null;
+                return p;
+              } catch {
+                return null;
+              }
+            });
         };
       })
       .on("end", () => tweenProjections(pB, pA, duration)); // loop
