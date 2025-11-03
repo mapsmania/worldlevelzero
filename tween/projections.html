@@ -69,8 +69,20 @@
   function updateProjection(projName){
     const proj = makeProjection(projName);
     path.projection(proj);
-    g.selectAll("path").transition().duration(1000).attr("d", path);
+
+    // Animate only if both previous and current projections are compatible
+    const prevProjName = projections[(currentIndex - 1 + projections.length) % projections.length];
+    const instant = (projName === "orthographic" || prevProjName === "orthographic");
+
+    if(instant){
+      g.selectAll("path").interrupt().attr("d", path); // instant redraw
+    } else {
+      g.selectAll("path").transition().duration(1000).attr("d", path); // smooth transition
+    }
+
     label.text(projName[0].toUpperCase() + projName.slice(1));
+
+    // Update header highlights
     d3.selectAll("#proj-header span").each(function(){
       this.classList.toggle("active", this.dataset.proj === projName);
     });
@@ -91,7 +103,7 @@
   // Initial projection
   updateProjection(projections[currentIndex]);
 
-  // Looping animation: advance every 2.5s
+  // Looping animation every 2.5s
   d3.interval(()=>{
     nextProjection();
   }, 2500);
