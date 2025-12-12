@@ -171,9 +171,11 @@ map.on("load", async () => {
   const geo = await fetchGeoJSON();
 
   map.addSource("europe", {
-    type: "geojson",
-    data: geo
-  });
+  type: "geojson",
+  data: geo,
+  promoteId: "id"    // <-- REQUIRED for feature-state coloring
+});
+
 
   // Base layer (grey fill)
   map.addLayer({
