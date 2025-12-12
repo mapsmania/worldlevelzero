@@ -77,9 +77,9 @@ const GEOJSON_URL =
   "https://mapsmania.github.io/worldlevelzero/CountryRecall/world.geojson";
 
 const COLORS = ["#e74c3c", "#27ae60", "#2980b9", "#f1c40f"];
-let selectedColor = 0;           // The chosen color button
+let selectedColor = 0;           // Selected color button
 let countryState = {};           // { featureId: colorIndex }
-let adjacency = {};              // { featureId: [neighbors...] }
+let adjacency = {};              // { featureId: [neighborIds...] }
 
 
 // -----------------------------------------------------------------------------
@@ -104,24 +104,25 @@ async function fetchGeoJSON() {
 
 
 // -----------------------------------------------------------------------------
-// 3. Compute country adjacency
+// 3. Compute country adjacency (all numeric IDs)
 // -----------------------------------------------------------------------------
 function computeAdjacency(features) {
   const neighbors = {};
   for (let i = 0; i < features.length; i++) {
     const a = features[i];
-    neighbors[a.id] = [];
+    const aId = Number(a.id);
+    neighbors[aId] = [];
 
     const aBox = bbox(a.geometry);
 
     for (let j = 0; j < features.length; j++) {
       if (i === j) continue;
       const b = features[j];
-      const bBox = bbox(b.geometry);
+      const bId = Number(b.id);
 
-      if (!boxesIntersect(aBox, bBox)) continue;
+      if (!boxesIntersect(aBox, bbox(b.geometry))) continue;
       if (sharesBorder(a.geometry, b.geometry)) {
-        neighbors[a.id].push(b.id);
+        neighbors[aId].push(bId);
       }
     }
   }
@@ -217,7 +218,7 @@ map.on("load", async () => {
 // -----------------------------------------------------------------------------
 function handleClick(e) {
   const feature = e.features[0];
-  const id = feature.id;
+  const id = Number(feature.id);
 
   const next = selectedColor;
 
@@ -237,7 +238,8 @@ function handleClick(e) {
 }
 
 function validMove(id, colorIndex) {
-  return adjacency[id].every(nId => countryState[nId] !== colorIndex);
+  const neighbors = adjacency[Number(id)] || [];
+  return neighbors.every(nId => countryState[nId] !== colorIndex);
 }
 
 function showStatus(msg) {
