@@ -113,16 +113,23 @@ function computeAdjacencyTurf(features) {
     const aId = Number(a.id);
     neighbors[aId] = [];
 
-    const polyA = turf.feature(a.geometry);
+    // Wrap Polygon vs MultiPolygon correctly
+    const polyA = (a.geometry.type === "Polygon") 
+      ? turf.polygon(a.geometry.coordinates)
+      : turf.multiPolygon(a.geometry.coordinates);
 
     for (let j = 0; j < features.length; j++) {
       if (i === j) continue;
       const b = features[j];
       const bId = Number(b.id);
-      const polyB = turf.feature(b.geometry);
+      const polyB = (b.geometry.type === "Polygon") 
+        ? turf.polygon(b.geometry.coordinates)
+        : turf.multiPolygon(b.geometry.coordinates);
 
-      // true if polygons touch or intersect
-      if (turf.booleanTouches(polyA, polyB) || turf.booleanOverlap(polyA, polyB) || turf.booleanContains(polyA, polyB) || turf.booleanIntersects(polyA, polyB)) {
+      if (turf.booleanTouches(polyA, polyB) ||
+          turf.booleanOverlap(polyA, polyB) ||
+          turf.booleanContains(polyA, polyB) ||
+          turf.booleanIntersects(polyA, polyB)) {
         neighbors[aId].push(bId);
       }
     }
