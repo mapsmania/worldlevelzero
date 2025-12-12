@@ -61,6 +61,7 @@
 </div>
 
 <script src="https://unpkg.com/maplibre-gl@3.6.1/dist/maplibre-gl.js"></script>
+<script src="https://unpkg.com/@turf/turf/turf.min.js"></script>
 <script>
 
 // -----------------------------------------------------------------------------
@@ -77,9 +78,9 @@ const GEOJSON_URL =
   "https://mapsmania.github.io/worldlevelzero/CountryRecall/world.geojson";
 
 const COLORS = ["#e74c3c", "#27ae60", "#2980b9", "#f1c40f"];
-let selectedColor = 0;           // Selected color button
-let countryState = {};           // { featureId: colorIndex }
-let adjacency = {};              // { featureId: [neighborIds...] }
+let selectedColor = 0;
+let countryState = {};
+let adjacency = {};
 
 
 // -----------------------------------------------------------------------------
@@ -98,74 +99,35 @@ async function fetchGeoJSON() {
     f.properties.id = i + 1;
   });
 
-  adjacency = computeAdjacency(geo.features);
+  adjacency = computeAdjacencyTurf(geo.features);
   return geo;
 }
 
-
 // -----------------------------------------------------------------------------
-// 3. Compute country adjacency (all numeric IDs)
+// 3. Compute adjacency using Turf.js
 // -----------------------------------------------------------------------------
-function computeAdjacency(features) {
+function computeAdjacencyTurf(features) {
   const neighbors = {};
   for (let i = 0; i < features.length; i++) {
     const a = features[i];
     const aId = Number(a.id);
     neighbors[aId] = [];
 
-    const aBox = bbox(a.geometry);
+    const polyA = turf.feature(a.geometry);
 
     for (let j = 0; j < features.length; j++) {
       if (i === j) continue;
       const b = features[j];
       const bId = Number(b.id);
+      const polyB = turf.feature(b.geometry);
 
-      if (!boxesIntersect(aBox, bbox(b.geometry))) continue;
-      if (sharesBorder(a.geometry, b.geometry)) {
+      // true if polygons touch or intersect
+      if (turf.booleanTouches(polyA, polyB) || turf.booleanOverlap(polyA, polyB) || turf.booleanContains(polyA, polyB) || turf.booleanIntersects(polyA, polyB)) {
         neighbors[aId].push(bId);
       }
     }
   }
   return neighbors;
-}
-
-function bbox(geom) {
-  let coords = geom.coordinates.flat(2);
-  let xs = coords.map(c => c[0]);
-  let ys = coords.map(c => c[1]);
-  return [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)];
-}
-
-function boxesIntersect(a, b) {
-  return !(b[0] > a[2] || b[2] < a[0] || b[1] > a[3] || b[3] < a[1]);
-}
-
-function sharesBorder(g1, g2) {
-  const edges1 = edges(g1.coordinates);
-  const edges2 = edges(g2.coordinates);
-  const eps = 0.0005;
-
-  for (const e1 of edges1) {
-    for (const e2 of edges2) {
-      if (pointsEqual(e1[0], e2[0], eps) && pointsEqual(e1[1], e2[1], eps)) return true;
-      if (pointsEqual(e1[0], e2[1], eps) && pointsEqual(e1[1], e2[0], eps)) return true;
-    }
-  }
-  return false;
-}
-
-function edges(coords) {
-  const list = [];
-  for (const poly of coords) {
-    for (let i = 0; i < poly.length - 1; i++) {
-      list.push([poly[i], poly[i + 1]]);
-    }
-  }
-  return list;
-}
-
-function pointsEqual(a, b, eps) {
-  return Math.abs(a[0] - b[0]) < eps && Math.abs(a[1] - b[1]) < eps;
 }
 
 
@@ -214,24 +176,22 @@ map.on("load", async () => {
 
 
 // -----------------------------------------------------------------------------
-// 5. Handle country click using SELECTED COLOR
+// 5. Handle country click using selected color
 // -----------------------------------------------------------------------------
 function handleClick(e) {
   const feature = e.features[0];
   const id = Number(feature.id);
 
-  const next = selectedColor;
-
-  if (!validMove(id, next)) {
+  if (!validMove(id, selectedColor)) {
     showStatus("❌ Invalid move — adjacent country uses this color.");
     return;
   }
 
-  countryState[id] = next;
+  countryState[id] = selectedColor;
 
   map.setFeatureState(
     { source: "europe", id },
-    { colorIndex: next }
+    { colorIndex: selectedColor }
   );
 
   showStatus("✔ Color applied!");
@@ -255,11 +215,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function updateSelectedButton() {
     buttons.forEach(btn => {
-      if (parseInt(btn.dataset.color) === selectedColor) {
-        btn.style.outline = "3px solid black";
-      } else {
-        btn.style.outline = "none";
-      }
+      btn.style.outline = (parseInt(btn.dataset.color) === selectedColor) ? "3px solid black" : "none";
     });
   }
 
