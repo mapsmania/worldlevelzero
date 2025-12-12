@@ -73,21 +73,22 @@ async function fetchGeoJSON() {
   const res = await fetch(GEOJSON_URL);
   const geo = await res.json();
 
-  // Assign numeric IDs if missing
-  geo.features.forEach((f, i) => {
-    if (f.id === undefined) f.id = i + 1;
-  });
-
-  // Filter Europe
+  // Filter Europe first
   geo.features = geo.features.filter(f =>
     f.properties.continent === "Europe"
   );
 
-  // Compute neighbors (bounding-box + actual border intersection)
+  // Now assign numeric IDs
+  geo.features.forEach((f, i) => {
+    f.id = i + 1;
+  });
+
+  // Now adjacency is consistent
   adjacency = computeAdjacency(geo.features);
 
   return geo;
 }
+
 
 
 // -----------------------------------------------------------------------------
