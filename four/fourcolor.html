@@ -78,16 +78,17 @@ async function fetchGeoJSON() {
     f.properties.continent === "Europe"
   );
 
-  // Now assign numeric IDs
+  // Assign IDs in properties (MapLibre requires this)
   geo.features.forEach((f, i) => {
-    f.id = i + 1;
+    f.properties.id = i + 1;
   });
 
-  // Now adjacency is consistent
+  // Build adjacency using THESE IDs
   adjacency = computeAdjacency(geo.features);
 
   return geo;
 }
+
 
 
 
@@ -221,6 +222,10 @@ map.on("load", async () => {
 // 5. Click handler: enforce the Four Color Theorem rule
 // -----------------------------------------------------------------------------
 function handleClick(e) {
+  console.log("Clicked feature:", feature);
+  console.log("MapLibre feature.id =", id);
+  console.log("Adjacency keys:", Object.keys(adjacency));
+  
   const feature = e.features[0];
   const id = feature.id;
 
