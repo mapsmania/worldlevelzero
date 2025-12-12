@@ -221,33 +221,38 @@ map.on("load", async () => {
 // -----------------------------------------------------------------------------
 // 5. Click handler: enforce the Four Color Theorem rule
 // -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+// 5. Click handler: enforce the Four Color Theorem rule
+// -----------------------------------------------------------------------------
 function handleClick(e) {
-  console.log("Clicked feature:", feature);
-  console.log("MapLibre feature.id =", id);
-  console.log("Adjacency keys:", Object.keys(adjacency));
-  
-  const feature = e.features[0];
-  const id = feature.id;
+    // 1. Get the clicked feature and its ID first
+    const feature = e.features[0];
+    const id = feature.id;
 
-  const current = countryState[id] ?? -1;
-  const next = (current + 1) % 4;
+    // 2. Now you can safely use the variables
+    console.log("Clicked feature:", feature);
+    console.log("MapLibre feature.id =", id);
+    console.log("Adjacency keys:", Object.keys(adjacency));
+	
+    const current = countryState[id] ?? -1;
+    const next = (current + 1) % 4;
 
-  // Check rule: no adjacent country may use the same color
-  if (!validMove(id, next)) {
-    showStatus("❌ Invalid move — adjacent country has that color.");
-    return;
-  }
+    // Check rule: no adjacent country may use the same color
+    if (!validMove(id, next)) {
+      showStatus("❌ Invalid move — adjacent country has that color.");
+      return;
+    }
 
-  // Apply color
-  countryState[id] = next;
-  map.setFeatureState(
-    { source: "europe", id },
-    { colorIndex: next }
-  );
+    // Apply color
+    countryState[id] = next;
+    map.setFeatureState(
+      { source: "europe", id },
+      { colorIndex: next }
+    );
 
-  showStatus("✔ Move OK!");
+    showStatus("✔ Move OK!");
 }
-
+  
 function validMove(id, colorIndex) {
   return adjacency[id].every(nId => countryState[nId] !== colorIndex);
 }
