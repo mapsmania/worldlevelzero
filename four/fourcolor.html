@@ -105,37 +105,44 @@ async function fetchGeoJSON() {
 
 // -----------------------------------------------------------------------------
 // 3. Compute adjacency using Turf.js
-// -----------------------------------------------------------------------------
-function computeAdjacencyTurf(features) {
+// --------------------------------------
+  function computeAdjacencyTurf(features) {
   const neighbors = {};
   for (let i = 0; i < features.length; i++) {
     const a = features[i];
     const aId = Number(a.id);
     neighbors[aId] = [];
 
-    // Wrap Polygon vs MultiPolygon correctly
-    const polyA = (a.geometry.type === "Polygon") 
-      ? turf.polygon(a.geometry.coordinates)
-      : turf.multiPolygon(a.geometry.coordinates);
+    const polysA = (a.geometry.type === "Polygon")
+      ? [turf.polygon(a.geometry.coordinates)]
+      : a.geometry.coordinates.map(c => turf.polygon(c));
 
     for (let j = 0; j < features.length; j++) {
       if (i === j) continue;
       const b = features[j];
       const bId = Number(b.id);
-      const polyB = (b.geometry.type === "Polygon") 
-        ? turf.polygon(b.geometry.coordinates)
-        : turf.multiPolygon(b.geometry.coordinates);
 
-      if (turf.booleanTouches(polyA, polyB) ||
-          turf.booleanOverlap(polyA, polyB) ||
-          turf.booleanContains(polyA, polyB) ||
-          turf.booleanIntersects(polyA, polyB)) {
-        neighbors[aId].push(bId);
+      const polysB = (b.geometry.type === "Polygon")
+        ? [turf.polygon(b.geometry.coordinates)]
+        : b.geometry.coordinates.map(c => turf.polygon(c));
+
+      let touches = false;
+      for (const pa of polysA) {
+        for (const pb of polysB) {
+          if (turf.booleanTouches(pa, pb) || turf.booleanIntersects(pa, pb)) {
+            touches = true;
+            break;
+          }
+        }
+        if (touches) break;
       }
+
+      if (touches) neighbors[aId].push(bId);
     }
   }
   return neighbors;
 }
+
 
 
 // -----------------------------------------------------------------------------
