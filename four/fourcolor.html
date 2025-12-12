@@ -8,7 +8,6 @@
   href="https://unpkg.com/maplibre-gl@3.6.1/dist/maplibre-gl.css"
   rel="stylesheet"
 />
-
 <style>
   body {
     margin: 0;
@@ -19,6 +18,8 @@
     position: absolute;
     top: 0; right: 0; bottom: 0; left: 0;
   }
+
+  /* Toolbar on top */
   #toolbar {
     position: absolute;
     top: 10px;
@@ -28,63 +29,100 @@
     border-radius: 8px;
     font-size: 14px;
     box-shadow: 0 0 8px rgba(0,0,0,0.2);
-  }
-  #color-buttons button {
-    width: 26px;
-    height: 26px;
-    border-radius: 5px;
-    cursor: pointer;
-    border: 2px solid black;
+    z-index: 10;
   }
   #status {
     margin-top: 6px;
     font-weight: bold;
   }
+
+  /* Modal overlay */
+  #introModal {
+    position: absolute;
+    top:0; left:0; right:0; bottom:0;
+    background: rgba(0,0,0,0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+  }
+
+  #introContent {
+    background: white;
+    padding: 30px 40px;
+    border-radius: 12px;
+    max-width: 500px;
+    text-align: left;
+    font-size: 16px;
+    line-height: 1.5;
+  }
+
+  #introContent h2 {
+    margin-top: 0;
+  }
+
+  #startButton {
+    margin-top: 20px;
+    padding: 10px 20px;
+    font-size: 16px;
+    border: none;
+    background: #2980b9;
+    color: white;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  #startButton:hover {
+    background: #3498db;
+  }
 </style>
 </head>
-
 <body>
+
+<!-- Map -->
 <div id="map"></div>
 
+<!-- Toolbar -->
 <div id="toolbar">
   <div><strong>Four-Color Map Game</strong></div>
-  <div>Select a color, then click a country.</div>
-
-  <div id="color-buttons" style="margin-top:6px; display:flex; gap:8px;">
-    <button class="color-btn" data-color="0" style="background:#e74c3c;"></button>
-    <button class="color-btn" data-color="1" style="background:#27ae60;"></button>
-    <button class="color-btn" data-color="2" style="background:#2980b9;"></button>
-    <button class="color-btn" data-color="3" style="background:#f1c40f;"></button>
-  </div>
-
+  <div>Click a country to color it. No two adjacent countries may share the same color.</div>
   <div id="status"></div>
 </div>
 
-<script src="https://unpkg.com/maplibre-gl@3.6.1/dist/maplibre-gl.js"></script>
-<script src="https://unpkg.com/@turf/turf/turf.min.js"></script>
-<script>
+<!-- Intro Modal -->
+<div id="introModal">
+  <div id="introContent">
+    <h2>Welcome to the Four-Color Map Game!</h2>
+    <p>The <strong>Four Color Theorem</strong> states that any map can be colored using at most <strong>four colors</strong> so that no two adjacent countries share the same color.</p>
+    <p><strong>Rules of the game:</strong></p>
+    <ul>
+      <li>Select a color from the buttons.</li>
+      <li>Click a country to color it.</li>
+      <li>No two adjacent countries can have the same color.</li>
+      <li>Color all countries correctly to win!</li>
+    </ul>
+    <button id="startButton">Start Game</button>
+  </div>
+</div>
 
-// -----------------------------------------------------------------------------
-// 1. Setup Map
-// -----------------------------------------------------------------------------
+<script src="https://unpkg.com/maplibre-gl@3.6.1/dist/maplibre-gl.js"></script>
+<script>
+// Hide modal when the game starts
+document.getElementById('startButton').addEventListener('click', () => {
+  document.getElementById('introModal').style.display = 'none';
+});
+
+// ---------------- Map setup ----------------
 const map = new maplibregl.Map({
   container: "map",
   style: {
     version: 8,
     sources: {},
-    layers: [
-      {
-        id: "background",
-        type: "background",
-        paint: {
-          "background-color": "#ffffff"  // plain white background
-        }
-      }
-    ]
+    layers: [{ id: "background", type: "background", paint: { "background-color": "#ffffff" } }]
   },
   center: [13, 52],
   zoom: 3.7
 });
+
 
 const GEOJSON_URL = 
   "https://mapsmania.github.io/worldlevelzero/CountryRecall/world.geojson";
