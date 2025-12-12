@@ -78,10 +78,11 @@ async function fetchGeoJSON() {
     f.properties.continent === "Europe"
   );
 
-  // Assign IDs in properties (MapLibre requires this)
   geo.features.forEach((f, i) => {
-    f.properties.id = i + 1;
-  });
+  f.id = i + 1;              // <-- FIXED
+  f.properties.id = i + 1;   // optional but harmless
+});
+
 
   // Build adjacency using THESE IDs
   adjacency = computeAdjacency(geo.features);
