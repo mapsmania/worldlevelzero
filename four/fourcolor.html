@@ -111,17 +111,25 @@ document.getElementById('startButton').addEventListener('click', () => {
   document.getElementById('introModal').style.display = 'none';
 });
 
-// ---------------- Map setup ----------------
 const map = new maplibregl.Map({
   container: "map",
   style: {
     version: 8,
     sources: {},
-    layers: [{ id: "background", type: "background", paint: { "background-color": "#ffffff" } }]
+    layers: [
+      {
+        id: "background",
+        type: "background",
+        paint: {
+          "background-color": "#ffffff"  // plain white background
+        }
+      }
+    ]
   },
   center: [13, 52],
   zoom: 3.7
 });
+
 
 
 const GEOJSON_URL = 
