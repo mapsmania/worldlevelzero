@@ -81,10 +81,10 @@ const COLORS = ["#e74c3c", "#27ae60", "#2980b9", "#f1c40f"];
 let selectedColor = 0;
 let countryState = {};
 let adjacency = {};
-
+let gameWon = false;
 
 // -----------------------------------------------------------------------------
-// 2. Load Europe features + set IDs + compute adjacency
+// 2. Load Europe features + compute adjacency
 // -----------------------------------------------------------------------------
 async function fetchGeoJSON() {
   const res = await fetch(GEOJSON_URL);
@@ -104,9 +104,9 @@ async function fetchGeoJSON() {
 }
 
 // -----------------------------------------------------------------------------
-// 3. Compute adjacency using Turf.js
-// --------------------------------------
-  function computeAdjacencyTurf(features) {
+// 3. Compute adjacency using Turf.js (handles Polygon + MultiPolygon)
+// -----------------------------------------------------------------------------
+function computeAdjacencyTurf(features) {
   const neighbors = {};
   for (let i = 0; i < features.length; i++) {
     const a = features[i];
@@ -121,7 +121,6 @@ async function fetchGeoJSON() {
       if (i === j) continue;
       const b = features[j];
       const bId = Number(b.id);
-
       const polysB = (b.geometry.type === "Polygon")
         ? [turf.polygon(b.geometry.coordinates)]
         : b.geometry.coordinates.map(c => turf.polygon(c));
@@ -142,8 +141,6 @@ async function fetchGeoJSON() {
   }
   return neighbors;
 }
-
-
 
 // -----------------------------------------------------------------------------
 // 4. Map layers + interaction
@@ -188,11 +185,12 @@ map.on("load", async () => {
   map.on("click", "europe-colored", handleClick);
 });
 
-
 // -----------------------------------------------------------------------------
-// 5. Handle country click using selected color
+// 5. Handle country click
 // -----------------------------------------------------------------------------
 function handleClick(e) {
+  if (gameWon) return;
+
   const feature = e.features[0];
   const id = Number(feature.id);
 
@@ -209,20 +207,38 @@ function handleClick(e) {
   );
 
   showStatus("✔ Color applied!");
+
+  checkWin();
 }
 
+// -----------------------------------------------------------------------------
+// 6. Valid move function
+// -----------------------------------------------------------------------------
 function validMove(id, colorIndex) {
   const neighbors = adjacency[Number(id)] || [];
   return neighbors.every(nId => countryState[nId] !== colorIndex);
 }
 
+// -----------------------------------------------------------------------------
+// 7. Check win condition
+// -----------------------------------------------------------------------------
+function checkWin() {
+  const allColored = Object.keys(adjacency).every(id => countryState[id] !== undefined);
+  if (allColored) {
+    gameWon = true;
+    showStatus("🏆 Congratulations! All countries successfully colored!");
+  }
+}
+
+// -----------------------------------------------------------------------------
+// 8. Show status messages
+// -----------------------------------------------------------------------------
 function showStatus(msg) {
   document.getElementById("status").textContent = msg;
 }
 
-
 // -----------------------------------------------------------------------------
-// 6. Color selection buttons
+// 9. Color selection buttons
 // -----------------------------------------------------------------------------
 document.addEventListener("DOMContentLoaded", () => {
   const buttons = document.querySelectorAll(".color-btn");
