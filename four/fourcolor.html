@@ -69,7 +69,19 @@
 // -----------------------------------------------------------------------------
 const map = new maplibregl.Map({
   container: "map",
-  style: "https://demotiles.maplibre.org/style.json",
+  style: {
+    version: 8,
+    sources: {},
+    layers: [
+      {
+        id: "background",
+        type: "background",
+        paint: {
+          "background-color": "#ffffff"  // plain white background
+        }
+      }
+    ]
+  },
   center: [13, 52],
   zoom: 3.7
 });
