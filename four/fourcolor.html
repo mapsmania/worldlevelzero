@@ -198,19 +198,15 @@ map.on("load", async () => {
     type: "fill",
     paint: {
       "fill-color": [
-        "case",
-        ["has", "colorIndex"],
-        [
-          "match",
-            ["feature-state", "colorIndex"],
-            0, COLORS[0],
-            1, COLORS[1],
-            2, COLORS[2],
-            3, COLORS[3],
-            "#cccccc"
-        ],
-        "#cccccc"
-      ],
+  "match",
+    ["feature-state", "colorIndex"],
+    0, COLORS[0],
+    1, COLORS[1],
+    2, COLORS[2],
+    3, COLORS[3],
+    "#cccccc"   // fallback when unset
+]
+
       "fill-outline-color": "#000"
     }
   });
