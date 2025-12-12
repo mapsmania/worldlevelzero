@@ -29,6 +29,13 @@
     font-size: 14px;
     box-shadow: 0 0 8px rgba(0,0,0,0.2);
   }
+  #color-buttons button {
+    width: 26px;
+    height: 26px;
+    border-radius: 5px;
+    cursor: pointer;
+    border: 2px solid black;
+  }
   #status {
     margin-top: 6px;
     font-weight: bold;
@@ -41,7 +48,15 @@
 
 <div id="toolbar">
   <div><strong>Four-Color Map Game</strong></div>
-  <div>Click a country to cycle colors.</div>
+  <div>Select a color, then click a country.</div>
+
+  <div id="color-buttons" style="margin-top:6px; display:flex; gap:8px;">
+    <button class="color-btn" data-color="0" style="background:#e74c3c;"></button>
+    <button class="color-btn" data-color="1" style="background:#27ae60;"></button>
+    <button class="color-btn" data-color="2" style="background:#2980b9;"></button>
+    <button class="color-btn" data-color="3" style="background:#f1c40f;"></button>
+  </div>
+
   <div id="status"></div>
 </div>
 
@@ -61,40 +76,35 @@ const map = new maplibregl.Map({
 const GEOJSON_URL = 
   "https://mapsmania.github.io/worldlevelzero/CountryRecall/world.geojson";
 
-const COLORS = ["#e74c3c", "#27ae60", "#2980b9", "#f1c40f"];  // 4 allowed colors
-let countryState = {};   // { featureId : colorIndex }
-let adjacency = {};      // { featureId : [neighborIds...] }
+const COLORS = ["#e74c3c", "#27ae60", "#2980b9", "#f1c40f"];
+let selectedColor = 0;           // The chosen color button
+let countryState = {};           // { featureId: colorIndex }
+let adjacency = {};              // { featureId: [neighbors...] }
 
 
 // -----------------------------------------------------------------------------
-// 2. Load Countries + Compute Adjacency
+// 2. Load Europe features + set IDs + compute adjacency
 // -----------------------------------------------------------------------------
 async function fetchGeoJSON() {
   const res = await fetch(GEOJSON_URL);
   const geo = await res.json();
 
-  // Filter Europe first
   geo.features = geo.features.filter(f =>
     f.properties.continent === "Europe"
   );
 
   geo.features.forEach((f, i) => {
-  f.id = i + 1;              // <-- FIXED
-  f.properties.id = i + 1;   // optional but harmless
-});
+    f.id = i + 1;
+    f.properties.id = i + 1;
+  });
 
-
-  // Build adjacency using THESE IDs
   adjacency = computeAdjacency(geo.features);
-
   return geo;
 }
 
 
-
-
 // -----------------------------------------------------------------------------
-// 3. Simple polygon adjacency detection (efficient enough for Europe)
+// 3. Compute country adjacency
 // -----------------------------------------------------------------------------
 function computeAdjacency(features) {
   const neighbors = {};
@@ -107,12 +117,9 @@ function computeAdjacency(features) {
     for (let j = 0; j < features.length; j++) {
       if (i === j) continue;
       const b = features[j];
-
-      // First check bounding box overlap (cheap test)
       const bBox = bbox(b.geometry);
-      if (!boxesIntersect(aBox, bBox)) continue;
 
-      // Now do coordinate-level check
+      if (!boxesIntersect(aBox, bBox)) continue;
       if (sharesBorder(a.geometry, b.geometry)) {
         neighbors[a.id].push(b.id);
       }
@@ -132,21 +139,15 @@ function boxesIntersect(a, b) {
   return !(b[0] > a[2] || b[2] < a[0] || b[1] > a[3] || b[3] < a[1]);
 }
 
-// VERY simple shared-border detection: checks if any edges match approximately.
-// This works well enough for country polygons.
 function sharesBorder(g1, g2) {
   const edges1 = edges(g1.coordinates);
   const edges2 = edges(g2.coordinates);
+  const eps = 0.0005;
 
-  const eps = 0.0005; // tolerance
   for (const e1 of edges1) {
     for (const e2 of edges2) {
-      if (pointsEqual(e1[0], e2[0], eps) && pointsEqual(e1[1], e2[1], eps)) {
-        return true;
-      }
-      if (pointsEqual(e1[0], e2[1], eps) && pointsEqual(e1[1], e2[0], eps)) {
-        return true;
-      }
+      if (pointsEqual(e1[0], e2[0], eps) && pointsEqual(e1[1], e2[1], eps)) return true;
+      if (pointsEqual(e1[0], e2[1], eps) && pointsEqual(e1[1], e2[0], eps)) return true;
     }
   }
   return false;
@@ -168,45 +169,41 @@ function pointsEqual(a, b, eps) {
 
 
 // -----------------------------------------------------------------------------
-// 4. Add layers & interaction
+// 4. Map layers + interaction
 // -----------------------------------------------------------------------------
 map.on("load", async () => {
   const geo = await fetchGeoJSON();
 
   map.addSource("europe", {
-  type: "geojson",
-  data: geo,
-  promoteId: "id"    // <-- REQUIRED for feature-state coloring
-});
+    type: "geojson",
+    data: geo,
+    promoteId: "id"
+  });
 
-
-  // Base layer (grey fill)
   map.addLayer({
     id: "europe-base",
     source: "europe",
     type: "fill",
     paint: {
       "fill-color": "#cccccc",
-      "fill-outline-color": "#000000"
+      "fill-outline-color": "#000"
     }
   });
 
-  // Interactive colored layer using feature-state
   map.addLayer({
     id: "europe-colored",
     source: "europe",
     type: "fill",
     paint: {
       "fill-color": [
-  "match",
-    ["feature-state", "colorIndex"],
-    0, COLORS[0],
-    1, COLORS[1],
-    2, COLORS[2],
-    3, COLORS[3],
-    "#cccccc"   // fallback when unset
-],
-
+        "match",
+          ["feature-state", "colorIndex"],
+          0, COLORS[0],
+          1, COLORS[1],
+          2, COLORS[2],
+          3, COLORS[3],
+          "#cccccc"
+      ],
       "fill-outline-color": "#000"
     }
   });
@@ -214,38 +211,31 @@ map.on("load", async () => {
   map.on("click", "europe-colored", handleClick);
 });
 
+
 // -----------------------------------------------------------------------------
-// 5. Click handler: enforce the Four Color Theorem rule
+// 5. Handle country click using SELECTED COLOR
 // -----------------------------------------------------------------------------
 function handleClick(e) {
-    // 1. Get the clicked feature and its ID first
-    const feature = e.features[0];
-    const id = feature.id;
+  const feature = e.features[0];
+  const id = feature.id;
 
-    // 2. Now you can safely use the variables
-    console.log("Clicked feature:", feature);
-    console.log("MapLibre feature.id =", id);
-    console.log("Adjacency keys:", Object.keys(adjacency));
-	
-    const current = countryState[id] ?? -1;
-    const next = (current + 1) % 4;
+  const next = selectedColor;
 
-    // Check rule: no adjacent country may use the same color
-    if (!validMove(id, next)) {
-      showStatus("❌ Invalid move — adjacent country has that color.");
-      return;
-    }
+  if (!validMove(id, next)) {
+    showStatus("❌ Invalid move — adjacent country uses this color.");
+    return;
+  }
 
-    // Apply color
-    countryState[id] = next;
-    map.setFeatureState(
-      { source: "europe", id },
-      { colorIndex: next }
-    );
+  countryState[id] = next;
 
-    showStatus("✔ Move OK!");
+  map.setFeatureState(
+    { source: "europe", id },
+    { colorIndex: next }
+  );
+
+  showStatus("✔ Color applied!");
 }
-  
+
 function validMove(id, colorIndex) {
   return adjacency[id].every(nId => countryState[nId] !== colorIndex);
 }
@@ -253,6 +243,34 @@ function validMove(id, colorIndex) {
 function showStatus(msg) {
   document.getElementById("status").textContent = msg;
 }
+
+
+// -----------------------------------------------------------------------------
+// 6. Color selection buttons
+// -----------------------------------------------------------------------------
+document.addEventListener("DOMContentLoaded", () => {
+  const buttons = document.querySelectorAll(".color-btn");
+
+  function updateSelectedButton() {
+    buttons.forEach(btn => {
+      if (parseInt(btn.dataset.color) === selectedColor) {
+        btn.style.outline = "3px solid black";
+      } else {
+        btn.style.outline = "none";
+      }
+    });
+  }
+
+  buttons.forEach(btn => {
+    btn.addEventListener("click", () => {
+      selectedColor = parseInt(btn.dataset.color);
+      updateSelectedButton();
+      showStatus("Color selected.");
+    });
+  });
+
+  updateSelectedButton();
+});
 
 </script>
 </body>
