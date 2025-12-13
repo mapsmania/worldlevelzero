@@ -65,7 +65,7 @@ map.on("load", async () => {
   try {
     // Load both world polygons and precomputed label points
     const [worldResp, labelResp] = await Promise.all([
-      fetch("world.geojson"),
+      fetch("countries.geojson"),
       fetch("labelpoint.geojson")
     ]);
     worldData = await worldResp.json();
